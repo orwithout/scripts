@@ -668,11 +668,6 @@ socat_local_motion="leave-it"
     if [[ -z $socat_local ]] ;then printf "%-18s" 'socat:未安装' ;else printf "%-18s" 'socat:已安装' ;fi
     if [[ -z $expect_local ]] ;then printf "%-18s" 'expect:未安装' ;else printf "%-18s" 'expect:已安装' ;fi
     if [[ -z $sshpass_local ]] ;then printf "%-18s" 'sshpass:未安装' ;else printf "%-18s" 'sshpass:已安装' ;fi
-    expect_local=$(expect_ver 2>/dev/null)
-    pass_local=$(pass_ver 2>/dev/null)
-    nmap_local=$(nmap_ver 2>/dev/null)
-    iperf3_local=$(iperf3_ver 2>/dev/null)
-    socat_local=$(socat_ver 2>/dev/null)
 } >>"$p_log"
 def_rl_exit() {   #$0 $1(设置的$?值) $2(退出提示信息)
     [[ $expect_local_motion =~ "remove" ]] &&local_smart_exec "yum remove expect -y" "apt remove expect -y"  >&2
@@ -680,6 +675,11 @@ def_rl_exit() {   #$0 $1(设置的$?值) $2(退出提示信息)
     [[ $nmap_local_motion =~ "remove" ]] &&local_smart_exec "yum remove nmap -y" "apt remove nmap -y"  >&2
     [[ $iperf3_local_motion =~ "remove" ]] &&local_smart_exec "yum remove iperf3 -y" "apt remove iperf3 -y"  >&2
     [[ $socat_local_motion =~ "remove" ]] &&local_smart_exec "yum remove socat -y" "apt remove socat -y"  >&2
+    expect_local=$(expect_ver 2>/dev/null)
+    pass_local=$(pass_ver 2>/dev/null)
+    nmap_local=$(nmap_ver 2>/dev/null)
+    iperf3_local=$(iperf3_ver 2>/dev/null)
+    socat_local=$(socat_ver 2>/dev/null)
     [[ "$1" = -1 &&-n "$2" ]] &&echo "$2" >&2 &&return 0
     [[ "$1" =  0 &&-n "$2" ]] &&echo "$2" >&2 &&exit 0  #以成功的状态退出
     def_exit "$1" "$2"  #以失败的状态退出
@@ -941,11 +941,11 @@ fwdset_remote_motion="leave-it"
     printf "%-18s" "forward:$fwdset_remote" 
 } >>"$p_log"
 def_rr_rl_exit() {   #$0 $1(设置的$?值) $2(退出提示信息)
-    #[[ -e ./nif.tmp.$p_uuid ]] &&rm -f ./nif.tmp.$p_uuid &&remote_smart_exec "rm -f ./nif.tmp.$p_uuid"  >&2
+    [[ -e ./nif.tmp.$p_uuid ]] &&rm -f ./nif.tmp.$p_uuid &&remote_smart_exec "rm -f ./nif.tmp.$p_uuid"  >&2
     [[ $nmap_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove nmap -y" "apt remove nmap -y"  >&2
-    [[ $iperf3_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove nmap -y" "apt remove nmap -y"  >&2
+    [[ $iperf3_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove iperf3 -y" "apt remove iperf3 -y"  >&2
     [[ $socat_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove socat -y" "apt remove socat -y"  >&2
-    [[ $fwdset_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove nmap -y" "apt remove nmap -y"  >&2
+    [[ $fwdset_remote_motion =~ "remove" ]] &&remote_smart_exec "sysctl -w net.ipv4.ip_forward=0" >&2
     nmap_remote=$(nmap_remote_ver 2>/dev/null)
     iperf3_remote=$(iperf3_remote_ver 2>/dev/null)
     socat_remote=$(socat_remote_ver 2>/dev/null)

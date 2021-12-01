@@ -117,3 +117,4 @@
     仅执行远程命令 :
         $0  abcd.com -u:ssh-user -etp -sp888 -exe'ls -t'  #在远程机上执行ls-t (若ssh端口是默认的22则-sp888可省略(以上通用)
     *如果想让脚本退出时保留[nmap] [socat] [iperf3] [sshpass] [expect],可用将以上出现的use替换为install(对forward是 -rf:enable)
+	

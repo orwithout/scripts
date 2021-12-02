@@ -110,3 +110,39 @@ HOP RTT     ADDRESS
     -w[ait] :指定-wait会获取更多信息,包括主机、路由追踪
     -b[ump] :这是一个野蛮选项,繁多的参数让你心烦吧。加入一个 -bump 让脚本来为你选择,你只需要指定一个远端机的地址,和端口号
     -log :指定日志信息输出到文件 -log/var/log/nif.sh.log   -log:/home/myuser/nif.sh.log
+
+4、使用示例($0指本脚本的执行名称)
+    简单检测(速度最快,不需要任何依赖,仅持tcp) :
+        $0 1.2.3.4 --t:80
+        或(多端口) $0 1.2.3.4 --t:80,443,20-22
+        或(域名方式) $0 abc.com 80
+    使用nmap检测(本端机需要有nmap) :
+        $0 1.2.3.4 -n-t:8080
+        或(udp) $0 1.2.3.4 -n-u:8080
+        或(自动安装/使用/卸载nmap) $0 1.2.3.4 -n-t:8080 -bump
+    使用socat联机测试延时(联机模式!会在远端机上依次占用/劫持所有待测端口,需要ssh能连接远端机,且本端和远端机均需要socat) :
+        $0 1.2.3.4 -sp22 -u:ssh-user -c-tc:8080
+        或(udp) $0 1.2.3.4 -sp22 -u:ssh-user -c-uc:8080
+        或(ssh使用私钥) $0 1.2.3.4 -sp22 -u:ssh-user -k/home/user/.ssh/private.key -c-tc:8080
+        或(ssh使用密码,本端需要sshpass或expect) $0 1.2.3.4 -sp22 -u:ssh-user -etp -c-tc:8080
+        或(ssh使用密码,自动安装/使用/卸载socat) $0 1.2.3.4 -sp22 -u:ssh-user -c-tc:8080 -bump
+    使用iperf3联机测试带宽(联机模式!会在远端机上依次占用/劫持所有待测端口,需要ssh能连接远端机,且本端和远端机均需要iperf3) :
+        $0 1.2.3.4 -sp22 -u:ssh-user -i-ti:8080
+        或(udp) $0 1.2.3.4 -sp22 -u:ssh-user -i-ui:8080
+        或(ssh使用私钥) $0 1.2.3.4 -sp22 -u:ssh-user -k/home/user/.ssh/private.key -i-ti:8080
+        或(ssh使用密码,本端需要sshpass或expect) $0 1.2.3.4 -sp22 -u:ssh-user -etp -i-ti:8080
+        或(ssh使用密码,自动安装/使用/卸载iperf3) $0 1.2.3.4 -sp22 -u:ssh-user -i-ti:8080 -bump
+    使用nmap测试路由追踪(需要root权限,本端需要有nmap) :
+        $0 1.2.3.4 -lso"local-sudo-password"
+        或(自动sudo提取) $0 1.2.3.4 -lso"local-sudo-password"
+        或(自动安装/使用/卸载nmap) $0 1.2.3.4 -lso"local-sudo-password" -ln:use
+        或直接 $0 -w
+    全量测试的自动向导 :
+        $0 -bump
+    全量测试的参数指定 :
+        $0 abcd.com -u:"ssh-user" -sp22 -etp -etlso -nci-cif:8080 -ln:use -lc:use -li:use -rc:use -ri:use -rf:use -w
+    仅检测主机和路由信息 :
+            $0 -wait
+    仅执行远程命令 :
+        $0  abcd.com -u:ssh-user -etp -sp888 -exe'ls -t'  #在远程机上执行ls-t (若ssh端口是默认的22则-sp888可省略(以上通用)
+    *如果想让脚本退出时保留[nmap] [socat] [iperf3] [sshpass] [expect],可用将以上出现的use替换为install(对forward是 -rf:enable)

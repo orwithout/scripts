@@ -1,1 +1,1 @@
-https://raw.githubusercontent.com/orwithout/scripts/main/help.txt
+https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh.help

@@ -2,6 +2,7 @@ nif.sh (network info)
 ver:0.7.5.20211202
 用于检测linux的[tcp/udp端口状态] [延时] [带宽] [路由追踪]
 下载 :https://github.com/orwithout/scripts/blob/main/nif.sh
+快速使用 :①cd切换到下载目录 ②给与执行权限chmod +x ./nif.sh ③执行./nif.sh -bump
 
 --   1、结果展示
 --   2、结果解说

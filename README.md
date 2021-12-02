@@ -1,5 +1,5 @@
 nif.sh (network info)  
-ver:0.7.5.20211202  
+ver :0.7.5.20211202  
 用于检测Linux的 [tcp/udp端口状态] [延时] [带宽] [路由追踪]  
 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh  
 快速使用 :

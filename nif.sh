@@ -68,12 +68,41 @@ EOF
 print_help(){
 echo
 cat <<'EOF'
---   1、结果说明
---   2、参数说明
---   3、使用示例
+nif.sh (network info shell)
+ver:0.7.5.20211202
+用于检测linux的[tcp/udp端口状态] [延时] [带宽] [路由追踪]
 
-1、结果说明
+--   1、结果展示
+--   2、结果解说
+--   3、参数说明
+--   4、使用示例
+
+1、结果展示
+$ ./nif.sh 1.2.3.4 -u:ssh-user -p"ssh-password" -lso"local-sudo-passwd" -nic-ci:8085,8086  -lpu -lnu -lcu -liu -rcu -riu -w
+---------------------------------------------------------------------------------------------
+    (联机模式!运行如果中断,远端机可能会残留iptables规则,届时请查看./nif.sh.log.92c562a0-3ddd-11ec-9bbc-0242ac130002........
+       port   state                service                  latency              bandwidth(bps)
+   8085/tcp   open                 unknown/iperf3           1ms(loss0/2)         ↑17.0G/↓19.8G
+   8086/tcp   open                 d-s-n/iperf3             1ms(loss0/2)         ↑16.9G/↓20.3G
+   8085/udp   open                 unknown/socat            1ms(loss0/2)         ↑3.24G(loss0%)±0.000ms/↓2.31G(loss0%)±0.000ms
+   8086/udp   open                 d-s-n/socat              1ms(loss0/2)         ↑2.96G(loss0%)±0.000ms/↓2.23G(loss0%)±0.000ms
+ remote-sys   lan-nic   lan-ip           lan-gateway      domain             external-ip      -a                 ping
+     centos   eth0      1.2.3.4          1.2.3.1          -                  1.2.3.4          1.2.3.4            0.127ms
+  local-sys   lan-nic   lan-ip           lan-gateway      domain             dns-serv
+     debian   ens160    2.3.4.5          2.3.4.1          -                  2.3.4.1
+
+Nmap scan report for 1.2.3.4
+Host is up (0.00033s latency).
+MAC Address: 00:50:56:8B:73:F3 (citrix)
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.33 ms 2.3.4.1
+2   0.66 ms 1.2.3.4
+------------------------------------------------
+
+2、结果说明
     对端口的测试结果,会返回5个项 :port  state  service  latency  bandwidth
+    -   :表示未作检测
     port :端口号,如 1234/tcp  1234/udp
     state :对端口号检测的状态结果,有 open established refused close timeout等
         open :端口可访问,且有服务开放,(来自使用了nmap的检测)
@@ -95,7 +124,7 @@ cat <<'EOF'
         tcp结果 ↑17.1G/↓948M 表示上传带宽有17.1Gbps 下载有948Mbps
         udp结果 ↑1.70G(loss0.18%)±0.002ms/↓953M(loss0.42%)±0.011ms 表示上传1.7Gbps 丢包率0.18% 时延波动±0.002ms,下载…
 
-2、参数说明
+3、参数说明
     -v[ersion] :打印版本、版权信息
     -h[elp] :打印帮助文档
     -a[ddress] :指定远端地址 -a:8.8.8.8 ,key:value之间冒号可以省略 -a8.8.8.8 .下同
@@ -137,14 +166,12 @@ cat <<'EOF'
     -li |localiperf3 :本端机iperf3使用,方法与-ri一样
     -lc |localsocat :本端机socat使用,方法与-rc一样 .注意,不是 -ls
     -lp |localsshpass :本端机sshpass使用,用于自动填写ssh密码,方法与上类似 -lp:install -lp:remove -lp:use
-    -le |localsocat :本端机expect,也是用于自动填写密码等交换,建议使用sshpass即可。方法与上类似 -le:install -le:remove -le:use
+    -le |localsocat :本端机expect,用于本端自动su命令提权(不用与远端,因为不稳定) 方法与上类似 -le:install -le:remove -le:use
     -k[ey] :指定ssh私钥。ssh登录可以使用密码,也可以使用key私钥文件 -k:/home/username/.ssh/private.key
     -p[assword] :指定ssh的登录密码 -p:'mypasswd' 在命令行参数里写密码会不安全,请继续往下看
-    -rsu :远端机su命令的密码,没有root权限功能会受限,若远端未配置sudo,则还可以用su来提权 -rsu'myrootpasswd'
     -lso :指定本端机sudo密码,可以用来提权 -lso'mypasswd'
     -lsu :指定本端机su命令密码，也就是root密码,也是用来提取的,没有配置sudo时也可以使用 -lsu'mypasswd'
     -etp :在-p上加入et(enter),让脚本来提示你将密码输入,这样密码不会被记录到history里 -etp
-    -etrsu :在-rsu上加入et(enter),让脚本来提示你将-rsu密码输入 -etrsu
     -etlso :在-lso上加入et(enter),让脚本来提示你将-lso密码输入 -etlso
     -etlsu :在-lsu上加入et(enter),让脚本来提示你将-lsu密码输入 -etlsu
     -to |timeout :使socat和iptables服务多少秒后退出,脚本被中断仍然有效,可避免服务残留,默认500,到期后依赖socat或iperf3的测试将失败
@@ -152,7 +179,7 @@ cat <<'EOF'
     -b[ump] :这是一个野蛮选项,繁多的参数让你心烦吧。加入一个 -bump 让脚本来为你选择,你只需要指定一个远端机的地址,和端口号
     -log :指定日志信息输出到文件 -log/var/log/nif.sh.log   -log:/home/myuser/nif.sh.log
 
-3、使用示例($0指本脚本的执行名称)
+4、使用示例($0指本脚本的执行名称)
     简单检测(速度最快,不需要任何依赖,仅持tcp) :
         $0 1.2.3.4 --t:80
         或(多端口) $0 1.2.3.4 --t:80,443,20-22
@@ -194,9 +221,9 @@ cat<<'EOF'
 
              *
        *   *                    nif.sh
-     *    \* / *                version :0.7.5.20211130
+     *    \* / *                version :0.7.5.20211202
        * --.:. *                by :haif
-      *   * :\ -                <shenzhen-fistbump-2021-11-30>
+      *   * :\ -                <shenzhen-fistbump-2021-12-02>
         .*  | \
        * *     \
      .  *       \
@@ -290,14 +317,11 @@ re_key='key'
 re_key_v='\\S+'
 re_pass='password'
 re_pass_v='\\S+'
-re_rsu='remotesupass'
-re_rsu_v='\\S+'
 re_lso='localsudopass'
 re_lso_v='\\S+'
 re_lsu='localsupass'
 re_lsu_v='\\S+'
 re_epass='enterpass'
-re_ersu='enterrsu'
 re_elso='enterlso'
 re_elsu='enterlsu'
 re_timeout='timeout'
@@ -344,11 +368,9 @@ set -- "$(echo "$*" |gawk -v matched=" -lp$__" -v obj=" $re_lp:" '{gsub(matched,
 set -- "$(echo "$*" |gawk -v matched=" -le$__" -v obj=" $re_le:" '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -k$__" -v obj=" $re_key:" '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -p$__" -v obj=" $re_pass:" '{gsub(matched,obj); print $0}')";
-set -- "$(echo "$*" |gawk -v matched=" -rsu$__" -v obj=" $re_rsu:" '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -lso$__" -v obj=" $re_lso:" '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -lsu$__" -v obj=" $re_lsu:" '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -en?t?-?p " -v obj=" $re_epass " '{gsub(matched,obj); print $0}')";
-set -- "$(echo "$*" |gawk -v matched=" -en?t?-?rsu " -v obj=" $re_ersu " '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -en?t?-?lso " -v obj=" $re_elso " '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -en?t?-?lsu " -v obj=" $re_elsu " '{gsub(matched,obj); print $0}')";
 set -- "$(echo "$*" |gawk -v matched=" -t(ime)?o(ut)?$__" -v obj=" $re_timeout:" '{gsub(matched,obj); print $0}')";
@@ -360,11 +382,11 @@ set -- "$(echo "$*" |gawk -v matched=" -log?$__" -v obj=" $re_log:" '{gsub(match
 
 
 #2.3 参数检查(是否重复、和不可识别)：
-EXECUTING="executing: $0 $*"
+EXECUTING="$(echo executing: "$0" "$*" |tr -s ' ')"
 START_PWD="pwd: $(pwd)"
 def_exit() {  #def_exit $1(设置的$?值) $2(退出提示信息)
     echo -e "\e[31mError $1: 程序已退出\e[0m"。 "$2"  >&2
-    echo "${EXECUTING// /}"  >&2
+    echo "$EXECUTING" >&2
     echo "$START_PWD"  >&2
     exit "$1"
 }
@@ -375,13 +397,12 @@ def_warning() {  #$0 $1(提示的字符串)
 loop_matched=()
 loop_i=1
 loop_lave="$*"
-for i in "$__$re_ver"            "$__$re_help"         "$re_address$__$re_address_v" "$__$re_addr"                 "$re_sp$__$re_sp_v"\
-         "$re_user$__$re_user_v" "$re_exe$__$re_exe_v" "$re_nif$__$re_nif_v"         "$__$re_port"                 "$re_count$__$re_count_v"\
-         "$re_rn$__$re_rn_v"     "$re_ri$__$re_ri_v"   "$re_rc$__$re_rc_v"           "$re_rf$__$re_rf_v"           "$re_ln$__$re_ln_v"\
-         "$re_li$__$re_li_v"     "$re_lc$__$re_lc_v"   "$re_lp$__$re_lp_v"           "$re_le$__$re_le_v"           "$re_key$__$re_key_v"\
-         "$re_pass$__$re_pass_v" "$re_rsu$__$re_rsu_v" "$re_lso$__$re_lso_v"         "$re_lsu$__$re_lsu_v"         "$__$re_epass"\
-         "$__$re_ersu"           "$__$re_elso"           "$__$re_elsu"                 "$re_timeout$__$re_timeout_v" "$__$re_wait"\
-         "$__$re_bump"           "$re_log$__$re_log_v"
+for i in "$__$re_ver"            "$__$re_help"                 "$re_address$__$re_address_v" "$__$re_addr"       "$re_sp$__$re_sp_v"\
+         "$re_user$__$re_user_v" "$re_exe$__$re_exe_v"         "$re_nif$__$re_nif_v"         "$__$re_port"       "$re_count$__$re_count_v"\
+         "$re_rn$__$re_rn_v"     "$re_ri$__$re_ri_v"           "$re_rc$__$re_rc_v"           "$re_rf$__$re_rf_v" "$re_ln$__$re_ln_v"\
+         "$re_li$__$re_li_v"     "$re_lc$__$re_lc_v"           "$re_lp$__$re_lp_v"           "$re_le$__$re_le_v" "$re_key$__$re_key_v"\
+         "$re_pass$__$re_pass_v" "$re_lso$__$re_lso_v"         "$re_lsu$__$re_lsu_v"         "$__$re_epass"      "$__$re_elso"\
+         "$__$re_elsu"           "$re_timeout$__$re_timeout_v" "$__$re_wait"                 "$__$re_bump"       "$re_log$__$re_log_v"
 do
     mtch=$(echo "$*" |tr -s ' ' |tr ' ' '\n' |gawk -v keyv="^$i$" '$0~keyv{print $0}')  #将n个参数切断为n行进行匹配
     [[ $(echo "$mtch" |wc -l) -gt 1 ]] &&def_exit 2 "参数项重复：$(echo "$mtch" |tr "\n" '  ')"  #如果匹配的有超过1行，说明参数有重复
@@ -420,17 +441,15 @@ p_lp=${loop_matched[18]}
 p_le=${loop_matched[19]}
 p_key=${loop_matched[20]}
 p_pass=${loop_matched[21]}
-p_rsu=${loop_matched[22]}
-p_lso=${loop_matched[23]}
-p_lsu=${loop_matched[24]}
-p_epass=${loop_matched[25]}
-p_ersu=${loop_matched[26]}
-p_elso=${loop_matched[27]}
-p_elsu=${loop_matched[28]}
-p_tout=${loop_matched[29]}
-p_wait=${loop_matched[30]}
-p_bump=${loop_matched[31]}
-p_log=${loop_matched[32]}
+p_lso=${loop_matched[22]}
+p_lsu=${loop_matched[23]}
+p_epass=${loop_matched[24]}
+p_elso=${loop_matched[25]}
+p_elsu=${loop_matched[26]}
+p_tout=${loop_matched[27]}
+p_wait=${loop_matched[28]}
+p_bump=${loop_matched[29]}
+p_log=${loop_matched[30]}
 #echo "3address-$p_address   4addr-$p_addr   5sp-$p_sp   6usr-$p_user   7exe-$p_exe   8nif-$p_nif   9port-$p_ports   10count-$p_count"
 #echo "11rn-$p_rn   12ri-$p_ri   13rc-$p_rc   14rf-$p_rf   15ln-$p_ln   16li-$p_li   17lc-$p_lc   18lp-$p_ls   19le-$p_le   20key-$p_key"
 #echo "21pass-$p_pass   22rsu-$p_rsu   23lso-$p_lso   24lsu-$p_lsu   25entp-$p_epass   26entrsu-$p_ersu    27entlso-$p_elso   28entlu-$p_elsu   29tout-$p_tout   30wait-$p_wait   31bump-$p_bump"
@@ -594,8 +613,8 @@ def_local_exec_pre() {
 #exit 0
 local_sys=''
 grep -q -i "centos" /etc/os-release &&local_sys=centos
-grep -q -i "ubuntu" /etc/os-release &&local_sys=ubuntu
 grep -q -i "debian" /etc/os-release &&local_sys=debian
+grep -q -i "ubuntu" /etc/os-release &&local_sys=ubuntu
 [[ -z $local_sys ]] &&def_exit 3 "本端主机系统无法识别"
 def_local_exec_pre
 local_smart_exec() {  #$0 $1(需要执行的命令-centos) $2(需要执行的命令-ubunt) $3(debian)
@@ -658,9 +677,8 @@ socat_local=$(socat_ver 2>/dev/null)
 socat_local_motion="leave-it"
 {   echo "远端机 :$p_address"
     echo "本端机 :$(hostname -I)"
-    echo "$EXECUTING"
-    echo "$START_PWD"
-    echo
+    echo "-a:$p_address -sp:$p_sp -u:$p_user -exe:$p_exe port[$p_nif][$p_ports] -c:$p_count -rn:$p_rn -ri:$p_ri -rc:$p_rc -rf:$p_rf -ln:$p_ln -li:$p_li -lc:$p_lc -lp:$p_lp -le:$p_le"
+    echo "-k:$p_key $p_epass $p_ersu $p_elso $p_elsu -to:$p_tout $p_wait $p_bump   $START_PWD"
     nowtime_tmp="$(date +"%T.%3N")"
     echo "运行前$nowtime_tmp :"
     if [[ -z $nmap_local ]] ;then printf "%-23s" "本端-nmap:未安装" ;else printf "%-23s" "本端-nmap:已安装" ;fi
@@ -668,6 +686,7 @@ socat_local_motion="leave-it"
     if [[ -z $socat_local ]] ;then printf "%-18s" 'socat:未安装' ;else printf "%-18s" 'socat:已安装' ;fi
     if [[ -z $expect_local ]] ;then printf "%-18s" 'expect:未安装' ;else printf "%-18s" 'expect:已安装' ;fi
     if [[ -z $sshpass_local ]] ;then printf "%-18s" 'sshpass:未安装' ;else printf "%-18s" 'sshpass:已安装' ;fi
+    echo
 } >>"$p_log"
 def_rl_exit() {   #$0 $1(设置的$?值) $2(退出提示信息)
     [[ $expect_local_motion =~ "remove" ]] &&local_smart_exec "yum remove expect -y" "apt remove expect -y"  >&2
@@ -817,39 +836,25 @@ tmp3=''
 tmp5=''
 tmp6=''
 tmp7=''
-tmpa=''
-tmpb=''
-tmpc=''
-tmpd=''
 remote_exec_pre=' '
-  { tmp1=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@$p_address -p$p_sp -i$p_key "whoami") ;[[ $tmp1 =~ root ]] ;} >/dev/null 2>&1\
-||{ tmp2=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@$p_address -p$p_sp -i$p_key "echo $p_uuid |sudo -S whoami") ;[[ $tmp2 =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ $p_pass != "$p_uuid" ]] &&tmp3=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@$p_address -p$p_sp -i$p_key "echo $p_pass |sudo -S whoami") ;[[ $tmp3 =~ root ]] ;} >/dev/null 2>&1\
-||{ tmp5=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@$p_address -p$p_sp "whoami") ;[[ $tmp5 =~ root ]] ;} >/dev/null 2>&1\
-||{ tmp6=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@$p_address -p$p_sp "echo $p_uuid |sudo -S whoami") ;[[ $tmp6 =~ root ]] ;}>/dev/null 2>&1\
-||{ [[ $p_pass != "$p_uuid" ]] &&tmp7=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@$p_address -p$p_sp "echo $p_pass |sudo -S whoami") ;[[ $tmp7 =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ -n $expect_local ]] &&tmpa=$(expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "whoami") ;[[ $tmpa =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ -n $expect_local ]] &&tmpb=$(expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "echo $p_uuid |sudo -S whoami") ;[[ $tmpb =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ $p_pass != "$p_uuid" &&-n $expect_local ]] &&tmpc=$(expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "echo $p_pass |sudo -S whoami") ;[[ $tmpc =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ $p_rsu != "$p_uuid" &&-n $expect_local ]] &&tmpd=$(expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "su -c whoami") ;} >/dev/null 2>&1
+  { tmp1=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "whoami") ;[[ $tmp1 =~ root ]] ;} >/dev/null 2>&1\
+||{ tmp2=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "echo $p_uuid |sudo -S whoami") ;[[ $tmp2 =~ root ]] ;} >/dev/null 2>&1\
+||{ [[ $p_pass != "$p_uuid" ]] &&tmp3=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "echo $p_pass |sudo -S whoami") ;[[ $tmp3 =~ root ]] ;} >/dev/null 2>&1\
+||{ [[ -n $pass_local ]] &&tmp5=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "whoami") ;[[ $tmp5 =~ root ]] ;} >/dev/null 2>&1\
+||{ [[ -n $pass_local ]] &&tmp6=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "echo $p_uuid |sudo -S whoami") ;[[ $tmp6 =~ root ]] ;}>/dev/null 2>&1\
+||{ [[ -n $pass_local &&$p_pass != "$p_uuid" ]] &&tmp7=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "echo $p_pass |sudo -S whoami") ;[[ $tmp7 =~ root ]] ;} >/dev/null 2>&1
 #echo "-----$tmp1 --$tmp2 --$tmp3 --$tmp4 --$tmp5 --$tmp6 --$tmp7 --$tmp8 --$tmpa --$tmpb --$tmpc --$tmpd --"
   { [[ $tmp1 =~ "root" ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
 ||{ [[ $tmp2 =~ "root" ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key "sudo" ' ;}\
 ||{ [[ $tmp3 =~ "root" ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key "echo $p_pass |sudo -S" ' ;}\
-||{ [[ $tmp5 =~ "root" ]] &&remote_exec_pre='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
-||{ [[ $tmp6 =~ "root" ]] &&remote_exec_pre='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "sudo" ' ;}\
-||{ [[ $tmp7 =~ "root" ]] &&remote_exec_pre='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "echo $p_pass |sudo -S" ' ;}\
-||{ [[ $tmpa =~ "root" ]] &&remote_exec_pre='expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" ' ;}\
-||{ [[ $tmpb =~ "root" ]] &&remote_exec_pre='expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "sudo" ' ;}\
-||{ [[ $tmpc =~ "root" ]] &&remote_exec_pre='expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "echo $p_pass |sudo -S" ' ;}\
-||{ [[ $tmpd =~ "root" ]] &&remote_exec_pre='expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" "su -c" ' ;}\
+||{ [[ $tmp5 =~ "root" ]] &&remote_exec_pre='sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
+||{ [[ $tmp6 =~ "root" ]] &&remote_exec_pre='sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "sudo" ' ;}\
+||{ [[ $tmp7 =~ "root" ]] &&remote_exec_pre='sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "echo $p_pass |sudo -S" ' ;}\
 ||{ [[ $tmp1 =~ $p_user ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
 ||{ [[ $tmp5 =~ $p_user ]] &&remote_exec_pre='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
-||{ [[ $tmpa =~ $p_user ]] &&remote_exec_pre='expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" ' ;}\
 ||remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp '
   { [[ $tmp1 =~ $p_user ]] &&remote_cp_pre='scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp -i$p_key ' ;}\
 ||{ [[ $tmp5 =~ $p_user ]] &&remote_cp_pre='sshpass -p$p_pass scp -oStrictHostKeyChecking=no -P$p_sp ' ;}\
-||{ [[ $tmpa =~ $p_user ]] &&remote_cp_pre='expect_exec "$p_pass" "$p_rsu" "scp -P$p_sp" ' ;}\
 ||remote_cp_pre='scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp '
 #  { [[ $tmp1 =~ $p_user ]] &&remote_cp_pre='scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp -i$p_key ' &&remote_run='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
 #||{ [[ $tmp5 =~ $p_user ]] &&remote_cp_pre='sshpass -p$p_pass scp -oStrictHostKeyChecking=no -P$p_sp ' &&remote_run='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
@@ -862,7 +867,8 @@ remote_sys=''
 [[ $(eval "$remote_exec_pre" 'cat /etc/os-release|grep -o centos' 2>/dev/null) =~ "centos" ]] &&remote_sys=centos
 [[ $(eval "$remote_exec_pre" 'cat /etc/os-release|grep -o ubuntu' 2>/dev/null) =~ "ubuntu" ]] &&remote_sys=ubuntu
 [[ $(eval "$remote_exec_pre" 'cat /etc/os-release|grep -o debian' 2>/dev/null) =~ "debian" ]] &&remote_sys=debian
-[[ -z $remote_sys && ($nif_remoteop =~ "c"|"i" || -n $p_exe) ]] &&def_rl_exit 4 "远端主机$p_address,ssh端口$p_sp,用户$p_user,系统不能识别或无法联机"
+[[ -n $pass_local ]] &&comment_tmp="本端sshpass:未安装"
+[[ -z $remote_sys && ($nif_remoteop =~ "c"|"i" || -n $p_exe) ]] &&def_rl_exit 4 "远端$p_address系统不能识别或无法联机[ssh端口$p_sp] [用户$p_user] [$comment_tmp]"
 remote_smart_cp() {  #$0 $1(本端文件) $2(远端保存路径)
     if [[ -z $2 ]] ;then
         tmp_resmtcp=$(echo "$1" |grep -o -E "[^/]+" |tail -n 1)".$p_uuid"
@@ -870,13 +876,10 @@ remote_smart_cp() {  #$0 $1(本端文件) $2(远端保存路径)
     fi
     eval "$remote_cp_pre" "$1 $p_user@$p_address:$2"
 }
-qp=''
-[[ $tmpb$tmpc =~ root ]] &&qp=\"
-[[ $tmpd =~ root ]] &&qp=\'  #expect 将变量解析后带单引号传递过去"'"表示单引号
 remote_smart_exec() {  #$0 $1(user) $2(host) $3(port) $4(需要执行的命令行) $5(password)  #$0 $1(需要执行的命令-centos) $(需要执行的命令-ubunt)
     [[ -z $2 ]] &&set -- "$1" "$1"
     [[ -z $3 ]] &&set -- "$1" "$2" "$2"
-    set --  "$qp""$1""$qp" "$qp""$2""$qp" "$qp""$3""$qp" 
+    set --  "$1" "$2" "$3" 
     if [[ $remote_sys = "centos" ]] ;then
         eval "$remote_exec_pre" '$1'
     elif [[ $remote_sys = "ubuntu" ]] ;then
@@ -897,7 +900,7 @@ remote_smart_cp_exec() {  #$0 $1(需要到远端执行的文件路径)
 remote_smart_exec_record() {  #$0 $1(user) $2(host) $3(port) $4(需要执行的命令行) $5(password)  #$0 $1(需要执行的命令-centos) $(需要执行的命令-ubunt)
     [[ -z $2 ]] &&set -- "$1" "$1"
     [[ -z $3 ]] &&set -- "$1" "$2" "$2"
-    set --  "$qp""$1""$qp" "$qp""$2""$qp" "$qp""$3""$qp"
+    set --  "$1" "$2" "$3"
     nowtime_tmp="$(date +"%T.%3N")"
     if [[ $remote_sys = "centos" ]] ;then
         echo "$nowtime_tmp on remote :$1" >>"$p_log"
@@ -913,7 +916,7 @@ printf "."  # echo "==4.1==="
 
 
 #4.2 修订nif_remoteop
-[[ ! $nif_remoteop =~ "f" &&$tmp1$tmp2$tmp3$tmp5$tmp6$tmp7$tmpa$tmpb$tmpc$tmpd =~ "root" ]]  &&nif_remoteop=$nif_remoteop'f'  #因为一个已知问题，多此开关socat时，后面的socat会开启失败，所以只打开一个socat,然后使用iptables来吧不同端口转发上来
+[[ ! $nif_remoteop =~ "f" &&$tmp1$tmp2$tmp3$tmp5$tmp6$tmp7 =~ "root" ]]  &&nif_remoteop=$nif_remoteop'f'  #因为一个已知问题，多此开关socat时，后面的socat会开启失败，所以只打开一个socat,然后使用iptables来吧不同端口转发上来
 #printf "."  # echo "==4.2==="
 
 #4.3 处理参数对远端软件指定的动作。消耗三个参数（p_rn p_ri p_rf）
@@ -934,18 +937,18 @@ socat_remote_motion="leave-it"
 fwdset_remote_ver(){ remote_smart_exec "cat /proc/sys/net/ipv4/ip_forward" ;}
 fwdset_remote=$(fwdset_remote_ver 2>/dev/null)
 fwdset_remote_motion="leave-it"
-{   echo
-    if [[ -z $nmap_remote ]] ;then printf "%-23s" "远端-nmap:未安装" ;else printf "%-23s" "远端-nmap:已安装" ;fi
+{   if [[ -z $nmap_remote ]] ;then printf "%-23s" "远端-nmap:未安装" ;else printf "%-23s" "远端-nmap:已安装" ;fi
     if [[ -z $iperf3_remote ]] ;then printf "%-18s" 'iperf3:未安装' ;else printf "%-18s" 'iperf3:已安装' ;fi
     if [[ -z $socat_remote ]] ;then printf "%-18s" 'socat:未安装' ;else printf "%-18s" 'socat:已安装' ;fi
     printf "%-18s" "forward:$fwdset_remote" 
+    echo
 } >>"$p_log"
 def_rr_rl_exit() {   #$0 $1(设置的$?值) $2(退出提示信息)
-    [[ -e ./nif.tmp.$p_uuid ]] &&rm -f ./nif.tmp.$p_uuid &&remote_smart_exec "rm -f ./nif.tmp.$p_uuid"  >&2
-    [[ $nmap_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove nmap -y" "apt remove nmap -y"  >&2
-    [[ $iperf3_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove iperf3 -y" "apt remove iperf3 -y"  >&2
-    [[ $socat_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove socat -y" "apt remove socat -y"  >&2
-    [[ $fwdset_remote_motion =~ "remove" ]] &&remote_smart_exec "sysctl -w net.ipv4.ip_forward=0" >&2
+    [[ -e ./nif.tmp.$p_uuid ]] &&rm -f ./nif.tmp.$p_uuid &&remote_smart_exec "rm -f ./nif.tmp.$p_uuid" >&2
+    [[ $nmap_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove nmap -y" "apt remove nmap -y" >&2
+    [[ $iperf3_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove iperf3 -y" "apt remove iperf3 -y" >&2
+    [[ $socat_remote_motion =~ "remove" ]] &&remote_smart_exec "yum remove socat -y" "apt remove socat -y" >&2
+    [[ $fwdset_remote_motion =~ "remove" ]] &&remote_smart_exec "sysctl -w net.ipv4.ip_forward=0"  >&2
     nmap_remote=$(nmap_remote_ver 2>/dev/null)
     iperf3_remote=$(iperf3_remote_ver 2>/dev/null)
     socat_remote=$(socat_remote_ver 2>/dev/null)
@@ -976,7 +979,7 @@ elif  [[ -z $p_rn ]] ;then
     nmap_remote_motion="leave-it"
 else
     def_rr_rl_exit 4 "参数$re_rn的值无法识别：$p_rn"
-fi
+fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.2==="
 
 #4.3.3 处理参数对远端iperf3指定的动作
@@ -1000,7 +1003,7 @@ elif  [[ -z $p_ri ]] ;then
     iperf3_remote_motion="leave-it"
 else
     def_rr_rl_exit 4 "参数$re_ri的值无法识别：$p_ri"
-fi
+fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.3==="
 
 #4.3.4 处理参数对远端socat指定的动作
@@ -1024,7 +1027,7 @@ elif  [[ -z $p_rc ]] ;then
     socat_remote_motion="leave-it"
 else
     def_rr_rl_exit 4 "参数$re_rc的值无法识别：$p_rc"
-fi
+fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.4==="
 
 #4.3.5 处理参数对远端forward配置指定的动作
@@ -1043,12 +1046,12 @@ elif [[ $p_rf =~ use|us|u ]] ;then
         fwdset_remote_motion="remove-it"
     fi
 elif [[ $p_rf =~ disable|dis|d|0 ]] ;then
-    [[ ! $fwdset_remote =~ 0 ]] &&iperf3_remote_motion="remove-it"
+    [[ ! $fwdset_remote =~ 0 ]] &&fwdset_remote_motion="remove-it"
 elif [[ -z $p_rf ]] ;then
     fwdset_remote_motion="leave-it"
 else
     def_rr_rl_exit 4 "参数$re_rf的值无法识别：$p_rf"
-fi
+fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.5==="
 
 
@@ -1064,9 +1067,10 @@ get_domain() {
         [[ $tmp_getdom =~ $re_ipv4 ]] ||echo "${tmp_getdom// /}"
     fi
 }
+remote_lan_nic=''
+remote_ip=''
+remote_lan_gateway=''
 remote_name=''
-remote_ip=''
-remote_ip=''
 if [[ $p_address =~ $re_ipv4 ]]; then
     remote_ip=$p_address
     remote_name=$(get_domain "$remote_ip" &)
@@ -1075,15 +1079,20 @@ else
     remote_ip=$(timeout 2 ping "$p_address" -c 1 |head -n 1 |grep -o -E "$re_ipv4" 2>/dev/null)
 fi
 remote_lan_default=$(remote_smart_exec "/usr/sbin/ip route" 2>/dev/null)
-remote_lan_gateway=$(echo "$remote_lan_default" |sed 's/::::/\n/g' |grep default |tr -s ' '|cut -d' ' -f3)
-remote_lan_nic=$(echo "$remote_lan_default" |sed 's/::::/\n/g' |grep default |tr -s ' '|cut -d' ' -f5)
-remote_lan_ip=$(echo "$remote_lan_default"  |sed 's/::::/\n/g' |grep "dev.*$remote_lan_nic.*proto.*kernel" |head -n1 |tr -s ' ' |grep -o -E "$re_ipv4")
+remote_lan_gateway=$(echo "$remote_lan_default" |grep default |tr -s ' '|cut -d' ' -f3)
+remote_lan_nic=$(echo "$remote_lan_default"  |grep default |tr -s ' '|cut -d' ' -f5)
+remote_lan_ip=$(echo "$remote_lan_default"   |grep "dev.*$remote_lan_nic.*proto.*kernel" |head -n1 |tr -s ' ' |grep -o -E "$re_ipv4")
 ((tmp_count="$p_count"+2))
 remote_ping=$(timeout $tmp_count ping "$remote_ip" -c $p_count |gawk -F"[/ ]" '/min\/avg\/max\/mdev/{print $8}' 2>/dev/null &)"ms"
 printf "."  # echo "==5.1==="
 
 
 #5.2 获取本端主机使用的dns、网关、和ip。消耗0个参数
+local_nic=''
+local_ip=''
+local_gateway=''
+local_name=''
+local_dns=''
 [[ $local_sys = centos ]] &&local_dns=$(grep -i "nameserver" /etc/resolv.conf |head -n 1 |grep -o -E "$re_ipv4")
 [[ $local_sys = debian ]] &&local_dns=$(grep -i "nameserver" /etc/resolv.conf |head -n 1 |grep -o -E "$re_ipv4")
 [[ $local_sys = ubuntu ]] &&local_dns=$(grep -v -E "^#|^$" /run/systemd/resolve/resolv.conf |grep -i "nameserver" |head -n 1 |grep -o -E "$re_ipv4")
@@ -1106,16 +1115,15 @@ printf "."  # echo "==5.2==="
 #6 软件的使用方法，和相关设置的开关方法
 #6.1 定义socat iperf3 forward于远端的服务开关函数。
 #保存一下任何服务开启前远端机的服务状态
-{   echo
-    remote_port_if=$(remote_smart_exec "/usr/sbin/ss -nlp4tu" "ss -nlp4tu" 2>/dev/null)
+{   remote_port_if=$(remote_smart_exec "/usr/sbin/ss -nlp4tu" "ss -nlp4tu" 2>/dev/null)
     remote_fwdrl_if=$(remote_smart_exec "iptables -tnat -nvL" 2>/dev/null)
     echo "远端-服务(sudo ss -nlp4tu ) :"
     [[ -n $remote_port_if ]] &&echo "$remote_port_if"
     echo "远端-iptables-nat(sudo iptables -tnat -nvL ) :"
     [[ -n $remote_fwdrl_if ]] &&echo "$remote_fwdrl_if" |grep -vE "^$"
-    if [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7$tmpa$tmpb$tmpc$tmpd =~ "root" ]] ;then
+    if [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7 =~ "root" ]] ;then
         printf "%-23s%-18s" "远端-有root:yes" "已准备好ssh联机:yes"
-    elif [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7$tmpa$tmpb$tmpc$tmpd =~ $p_user ]] ;then
+    elif [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7 =~ $p_user ]] ;then
         printf "%-23s%-18s%" "远端-有root:no" "已准备好ssh联机:yes"
     else
         printf "%-23s%-18s" "远端-有root:no" "已准备好ssh联机:no"
@@ -1155,10 +1163,10 @@ portsv_stop() {  #$0 $1(tcp dup) $2(端口号) $3(进程二进制名称)
 }
 get_a_free_port() {  #$0 $1(local remote)
     tmp_gtafree=$(remote_smart_cp_exec 'comm -23 <(seq 49152 65535 |sort) <(ss -Htan |cut -d: -f2 |sort -u) |shuf |head -n 200' 2>/dev/null)
-    tmp_gtafree=$(echo "$tmp_gtafree" |sed 's/::::/\n/g' |grep -Eo "^[0-9]{5}$")
+    tmp_gtafree=$(echo "$tmp_gtafree"  |grep -Eo "^[0-9]{5}$")
     tmp_gtafree=$(remote_smart_cp_exec "comm -23 <(echo $tmp_gtafree) <(iptables -tnat -nvL|grep -oE [0-9]{5} |sort -u) |shuf |head -n 1" 2>/dev/null)
-    tmp_gtafree=$(echo "$tmp_gtafree" |sed 's/::::/\n/g' |grep -Eo "^[0-9]{5}$")
-    tmp_gtafree=$(echo "$tmp_gtafree" |sed 's/::::/\n/g' |grep -Eo "^[0-9]{5}$")
+    tmp_gtafree=$(echo "$tmp_gtafree"  |grep -Eo "^[0-9]{5}$")
+    tmp_gtafree=$(echo "$tmp_gtafree"  |grep -Eo "^[0-9]{5}$")
     if [[ -n $tmp_gtafree ]] ;then
         echo "$tmp_gtafree"
         return 0
@@ -1333,8 +1341,8 @@ def_sv_rr_rl_exit_exist="true"
 
 #6.3 定义socat iperf3 ssh于本端的扫描函数。
 socat_online_scan_latency() {  #$0 $1(tcp udp) $2(端口号) $3(需要减去的修正值) $4(对端主机)
-    [[ -z $3 &&$1 =~ t ]] &&set -- "$1" "$2"    2  "$p_address"
-    [[ -z $3 &&$1 =~ u ]] &&set -- "$1" "$2"  503  "$p_address"
+    [[ -z $3 &&$1 =~ t ]] &&set -- "$1" "$2"    1  "$p_address"
+    [[ -z $3 &&$1 =~ u ]] &&set -- "$1" "$2"  502  "$p_address"
     [[ -z $4 ]]    &&set -- "$1" "$2" "$3" "$p_address"
     [[ $1 =~ t ]] &&set -- 'tcp' "$2" "$3" "$4"
     [[ $1 =~ u ]] &&set -- 'udp' "$2" "$3" "$4"
@@ -1454,7 +1462,7 @@ printf "."  # echo "==6.3==="
 #6.4.1 ssh扫描方法
 state_tcp="echo -:-"
 latency_tcp="echo -"
-state_udp="echo -:-"
+state_udp="echo local_need_nmap:-"
 latency_udp="echo -"
 if [[ $nif_localop =~ "s"|"n" &&! $nif_remoteop =~ "t" && $nif_remoteop =~ "u" ]] ;then
     state_tcp1() { echo "默认ssh模式:无法扫描udp" ;}
@@ -1660,10 +1668,10 @@ fi
 
 #6.4.3 socat方法
 if [[ $nif_localop =~ "c" &&-z $socat_local ]] ;then
-    latency_tcp17() { echo "本端未安装socat" ;}
+    latency_tcp17() { echo "local_need_socat" ;}
     latency_tcp="latency_tcp17"
 elif [[ $nif_localop =~ "c" &&-n $socat_local &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "c" && -z $socat_remote ]] ;then
-    latency_tcp17_2() { echo "远端未安装socat" ;}
+    latency_tcp17_2() { echo "remote_need_socat" ;}
     latency_tcp="latency_tcp17_2"
 elif [[ $nif_localop =~ "c" &&-n $socat_local &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "c" && -n $socat_remote &&! $nif_remoteop =~ "f" ]] ;then
     latency_tcp18() {
@@ -1723,10 +1731,10 @@ fi
  bandwidth_tcp="echo -"
  bandwidth_udp="echo -"
 if [[ $nif_localop =~ "i" &&-z $iperf3_local ]] ;then
-    bandwidth_tcp22() { echo "本端未安装iperf3" ;}
+    bandwidth_tcp22() { echo "local_need_iperf3" ;}
     bandwidth_tcp="bandwidth_tcp22"
 elif [[ $nif_localop =~ "i" &&-n $iperf3_local &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "i" && -z $iperf3_remote ]] ;then
-    bandwidth_tcp23() { echo "远端未安装iperf3" ;}
+    bandwidth_tcp23() { echo "remote_need_iperf3" ;}
     bandwidth_tcp="bandwidth_tcp23"
 elif [[ $nif_localop =~ "i" &&-n $iperf3_local &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "i" && -n $iperf3_remote &&! $nif_remoteop =~ "f" ]] ;then
     bandwidth_tcp24() {
@@ -1853,8 +1861,8 @@ for i in $(eval echo "$ports_exp") ;do  #取出每组端口，做udp检测动作
     #echo "$i"  #debug
 done
 [[ $sign_only_wait = "true" ]] ||
-if [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7$tmpa$tmpb$tmpc$tmpd =~ $p_user &&$p_user != "$p_uuid" &&-n $p_exe$p_rn$p_ri$p_rc ]] ;then
-    [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7$tmpa$tmpb$tmpc$tmpd =~ "root" ]] ||def_warning "对远端$p_address没有root权限.故不支持-[远端机软件安装/卸载] [远端机forward设置] [1024以下端口的联机测试] [执行远程命令]"
+if [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7 =~ $p_user &&$p_user != "$p_uuid" &&-n $p_exe$p_rn$p_ri$p_rc ]] ;then
+    [[ $tmp1$tmp2$tmp3$tmp5$tmp6$tmp7 =~ "root" ]] ||def_warning "对远端$p_address没有root权限.故不支持-[远端机软件安装/卸载] [远端机forward设置] [1024以下端口的联机测试] [执行远程命令]"
 fi
 if [[ -n $p_ln$p_li$p_lc$p_le$p_lp ]] ;then
     local_smart_exec whoami |grep -q root ||def_warning "对本端没有root权限.故不支持-[udp延时测试] [本端机软件安装/卸载]"
@@ -1871,6 +1879,12 @@ fi
 [[ -z $remote_lan_gateway ]] &&remote_lan_gateway='-'
 [[ -z $remote_name ]] &&remote_name='-'
 [[ -z $remote_ip ]] &&remote_ip='-'
+[[ -z $local_sys ]] &&local_sys='-'
+[[ -z $local_nic ]] &&local_nic='-'
+[[ -z $local_ip ]] &&local_ip='-'
+[[ -z $local_gateway ]] &&local_gateway='-'
+[[ -z $local_name ]] &&local_name='-'
+[[ -z $local_dns ]] &&local_dns='-'
 printf '\n%11s   %-10s%-17s%-17s%-19s%-17s%-19s%-s' "remote-sys" "lan-nic" "lan-ip" "lan-gateway" "domain" "external-ip" "-a" "ping"
 printf '\n%11s   %-10s%-17s%-17s%-19s%-17s%-19s%-s' "$remote_sys" "$remote_lan_nic" "$remote_lan_ip" "$remote_lan_gateway" "$remote_name" "$remote_ip" "$p_address" "$remote_ping"
 #system   lan-nic   lan-ip           lan-gateway      domain             dns-serv

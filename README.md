@@ -8,5 +8,5 @@ ver :0.7.5.20211202
 ③ 执行./nif.sh -bump  
   
   
-使用说明 :  
+更多说明 :  
 https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh.help  

@@ -4,8 +4,8 @@ ver :0.7.5.20211202
 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh  
 快速使用 :  
 ① cd切换到下载目录  
-② 给与执行权限chmod +x ./nif.sh  
-③ 执行./nif.sh  -bump  
+② 给与执行权限 chmod +x ./nif.sh  
+③ 执行 ./nif.sh -bump  
   
   
 更多说明 :  

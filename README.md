@@ -22,7 +22,7 @@ ver :0.7.5.20211202
 ./nif.sh -bump  
   
 脚本会按需申请对远端机的ssh连接密码,以及本地sudo提权,  
-然后按需在本端和远端机上安装/使用 sshpass nmap socat iperf3 (使用完后自动需清理)  
+然后按需在本端和远端机上安装/使用 sshpass nmap socat iperf3 (使用完后自动清理)  
 和按需在远端机上设置forward、iptables转发 (使用完后自动复原)  
   
 使用说明 :  

@@ -4,7 +4,7 @@ ver :0.7.5.20211202
   
 快速使用  
 ① 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh  
-② cd切换到下载目录  
+② cd 进入到下载目录  
 ③ 给与执行权限 chmod +x ./nif.sh  
   
 使用示例  
@@ -20,7 +20,7 @@ ver :0.7.5.20211202
 ./nif.sh -bump  
   
 脚本会自动申请对远端机的ssh连接密码,以及本地sudo提权 ,  
-然后按需在本端和远端机上安装/使用 sshpass nmap socat iperf3 ,
+然后按需在本端和远端机上安装/使用 sshpass nmap socat iperf3 ,  
 按需在远端机是设置forward、iptables转发 ,  
   
 使用说明 :  

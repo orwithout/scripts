@@ -28,7 +28,6 @@ https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh.help
   
 结果展示  
 $ ./nif.sh 1.2.3.4 -u:ssh-user -p"ssh-password" -lso"local-sudo-passwd" -nic-ci:8085,8086  -lpu -lnu -lcu -liu -rcu -riu -w  
----------------------------------------------------------------------------------------------  
     (联机模式!运行如果中断,远端机可能会残留iptables规则,届时请查看./nif.sh.log.92c562a0-3ddd-11ec-9bbc-0242ac130002........  
        port   state                service                  latency              bandwidth(bps)  
    8085/tcp   open                 unknown/iperf3           1ms(loss0/2)         ↑17.0G/↓19.8G  
@@ -47,5 +46,4 @@ TRACEROUTE
 HOP RTT     ADDRESS  
 1   0.33 ms 2.3.4.1  
 2   0.66 ms 1.2.3.4  
-------------------------------------------------  
   

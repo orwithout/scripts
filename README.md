@@ -1,5 +1,5 @@
 nif.sh (network info shell)  
-ver :0.7.5.20211202  
+ver :0.7.5.20211204  
 用于检测两台Linux之间 [端口状态] [延时] [带宽] [路由追踪]  
   
 快速使用  
@@ -27,4 +27,3 @@ ver :0.7.5.20211202
   
 使用说明 :  
 https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh.help  
-  

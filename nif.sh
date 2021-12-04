@@ -223,7 +223,7 @@ cat<<'EOF'
 
              *
        *   *                    nif.sh
-     *    \* / *                version :0.7.5.20211204
+     *    \* / *                version :0.7.6.20211204
        * --.:. *                by :haif
       *   * :\ -                <shenzhen-fistbump-2021-12-02>
         .*  | \

@@ -839,25 +839,25 @@ tmp5=''
 tmp6=''
 tmp7=''
 remote_exec_pre=' '
-  { tmp1=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "whoami") ;[[ $tmp1 =~ root ]] ;} >/dev/null 2>&1\
-||{ tmp2=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "echo $p_uuid |sudo -S whoami") ;[[ $tmp2 =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ $p_pass != "$p_uuid" ]] &&tmp3=$(ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "echo $p_pass |sudo -S whoami") ;[[ $tmp3 =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ -n $pass_local ]] &&tmp5=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "whoami") ;[[ $tmp5 =~ root ]] ;} >/dev/null 2>&1\
-||{ [[ -n $pass_local ]] &&tmp6=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "echo $p_uuid |sudo -S whoami") ;[[ $tmp6 =~ root ]] ;}>/dev/null 2>&1\
-||{ [[ -n $pass_local &&$p_pass != "$p_uuid" ]] &&tmp7=$(sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "echo $p_pass |sudo -S whoami") ;[[ $tmp7 =~ root ]] ;} >/dev/null 2>&1
+  { tmp1=$(timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "whoami") ;[[ $tmp1 =~ root ]] ;} >/dev/null 2>&1\
+||{ tmp2=$(timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "echo $p_uuid |sudo -S whoami") ;[[ $tmp2 =~ root ]] ;} >/dev/null 2>&1\
+||{ [[ $p_pass != "$p_uuid" ]] &&tmp3=$(timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" -i"$p_key" "echo $p_pass |sudo -S whoami") ;[[ $tmp3 =~ root ]] ;} >/dev/null 2>&1\
+||{ [[ -n $pass_local ]] &&tmp5=$(timeout 3 sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "whoami") ;[[ $tmp5 =~ root ]] ;} >/dev/null 2>&1\
+||{ [[ -n $pass_local ]] &&tmp6=$(timeout 3 sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "echo $p_uuid |sudo -S whoami") ;[[ $tmp6 =~ root ]] ;}>/dev/null 2>&1\
+||{ [[ -n $pass_local &&$p_pass != "$p_uuid" ]] &&tmp7=$(timeout 3 sshpass -p "$p_pass" ssh -oStrictHostKeyChecking=no "$p_user"@"$p_address" -p"$p_sp" "echo $p_pass |sudo -S whoami") ;[[ $tmp7 =~ root ]] ;} >/dev/null 2>&1
 #echo "-----$tmp1 --$tmp2 --$tmp3 --$tmp4 --$tmp5 --$tmp6 --$tmp7 --$tmp8 --$tmpa --$tmpb --$tmpc --$tmpd --"
-  { [[ $tmp1 =~ "root" ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
-||{ [[ $tmp2 =~ "root" ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key "sudo" ' ;}\
-||{ [[ $tmp3 =~ "root" ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key "echo $p_pass |sudo -S" ' ;}\
-||{ [[ $tmp5 =~ "root" ]] &&remote_exec_pre='sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
-||{ [[ $tmp6 =~ "root" ]] &&remote_exec_pre='sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "sudo" ' ;}\
-||{ [[ $tmp7 =~ "root" ]] &&remote_exec_pre='sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "echo $p_pass |sudo -S" ' ;}\
-||{ [[ $tmp1 =~ $p_user ]] &&remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
-||{ [[ $tmp5 =~ $p_user ]] &&remote_exec_pre='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
-||remote_exec_pre='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp '
-  { [[ $tmp1 =~ $p_user ]] &&remote_cp_pre='scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp -i$p_key ' ;}\
-||{ [[ $tmp5 =~ $p_user ]] &&remote_cp_pre='sshpass -p$p_pass scp -oStrictHostKeyChecking=no -P$p_sp ' ;}\
-||remote_cp_pre='scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp '
+  { [[ $tmp1 =~ "root" ]] &&remote_exec_pre='timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
+||{ [[ $tmp2 =~ "root" ]] &&remote_exec_pre='timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key "sudo" ' ;}\
+||{ [[ $tmp3 =~ "root" ]] &&remote_exec_pre='timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key "echo $p_pass |sudo -S" ' ;}\
+||{ [[ $tmp5 =~ "root" ]] &&remote_exec_pre='timeout 3 sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
+||{ [[ $tmp6 =~ "root" ]] &&remote_exec_pre='timeout 3 sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "sudo" ' ;}\
+||{ [[ $tmp7 =~ "root" ]] &&remote_exec_pre='timeout 3 sshpass -p$p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp "echo $p_pass |sudo -S" ' ;}\
+||{ [[ $tmp1 =~ $p_user ]] &&remote_exec_pre='timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
+||{ [[ $tmp5 =~ $p_user ]] &&remote_exec_pre='timeout 3 sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
+||remote_exec_pre='timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp '
+  { [[ $tmp1 =~ $p_user ]] &&remote_cp_pre='timeout 34 scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp -i$p_key ' ;}\
+||{ [[ $tmp5 =~ $p_user ]] &&remote_cp_pre='timeout 34 sshpass -p$p_pass scp -oStrictHostKeyChecking=no -P$p_sp ' ;}\
+||remote_cp_pre='timeout 34 scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp '
 #  { [[ $tmp1 =~ $p_user ]] &&remote_cp_pre='scp -oBatchMode=yes -oStrictHostKeyChecking=no -P$p_sp -i$p_key ' &&remote_run='ssh -oBatchMode=yes -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp -i$p_key ' ;}\
 #||{ [[ $tmp5 =~ $p_user ]] &&remote_cp_pre='sshpass -p$p_pass scp -oStrictHostKeyChecking=no -P$p_sp ' &&remote_run='sshpass -p $p_pass ssh -oStrictHostKeyChecking=no $p_user@$p_address -p$p_sp ' ;}\
 #||{ [[ $tmpa =~ $p_user ]] &&remote_cp_pre='expect_exec "$p_pass" "$p_rsu" "scp -P$p_sp" ' &&remote_run='expect_exec "$p_pass" "$p_rsu" "ssh $p_user@$p_address -p$p_sp" ' ;}\

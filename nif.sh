@@ -71,7 +71,7 @@ cat <<'EOF'
 nif.sh (network info shell)
 ver:0.7.5.20211202
 用于检测linux的[tcp/udp端口状态] [延时] [带宽] [路由追踪]
-下载: wget https://github.com/orwithout/scripts/blob/main/nif.sh
+下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh
 快速使用: ① cd切换到下载目录 ;② 给与执行权限chmod +x ./nif.sh ;③ 执行./nif.sh -bump
 
 --   1、结果展示
@@ -1581,15 +1581,11 @@ fi
 #6.4.2 nmap扫描方法(对部分ssh方法进行重写和覆盖)
 if [[ $nif_localop =~ "n" &&-z $nmap_local ]] ;then
     def_warning "本端主机未安装nmap,仍使用默认的ssh做tcp的state扫描,udp的将忽略"
-elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t"|"u" &&! $nif_remoteop =~ "c"|"i"|"f" ]] ;then
+elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t" ]] ;then
     if [[ $nif_remoteop =~ "t" ]] ;then
         state_tcp10() { nmap_scan t "$1" ;}
     fi
-    if [[ $nif_remoteop =~ "u" ]] ;then
-        state_udp10() { nmap_scan u "$1" ;}
-    fi
     state_tcp="state_tcp10"
-    state_udp="state_udp10"
 elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "i" && -n $iperf3_remote &&! $nif_remoteop =~ "f" ]] ;then
     state_tcp11() {
         iperf3sv_start t "$1"
@@ -1641,6 +1637,11 @@ elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t" &&$nif_remot
 fi
 if [[ $nif_localop =~ "n" &&-z $nmap_local ]] ;then
     :
+elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "u" ]] ;then
+    if [[ $nif_remoteop =~ "u" ]] ;then
+        state_udp15_0() { nmap_scan u "$1" ;}
+    fi
+    state_udp="state_udp15_0"
 elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "u" &&$nif_remoteop =~ "c" && -n $socat_remote &&! $nif_remoteop =~ "f" ]] ;then
     state_udp15() {
         socatsv_start u "$1"
@@ -1887,12 +1888,12 @@ fi
 [[ -z $local_gateway ]] &&local_gateway='-'
 [[ -z $local_name ]] &&local_name='-'
 [[ -z $local_dns ]] &&local_dns='-'
-printf '\n%11s   %-10s%-17s%-17s%-19s%-17s%-19s%-s' "remote-sys" "lan-nic" "lan-ip" "lan-gateway" "domain" "external-ip" "-a" "ping"
-printf '\n%11s   %-10s%-17s%-17s%-19s%-17s%-19s%-s' "$remote_sys" "$remote_lan_nic" "$remote_lan_ip" "$remote_lan_gateway" "$remote_name" "$remote_ip" "$p_address" "$remote_ping"
+printf '\n%11s   %-10s%-17s%-17s%-17s%-17s%-10s%-s' "remote-sys" "lan-nic" "lan-ip" "lan-gateway" "external-ip" "-a" "ping" "domain"
+printf '\n%11s   %-10s%-17s%-17s%-17s%-17s%-10s%-s' "$remote_sys" "$remote_lan_nic" "$remote_lan_ip" "$remote_lan_gateway" "$remote_ip" "$p_address" "$remote_ping" "$remote_name"
 #system   lan-nic   lan-ip           lan-gateway      domain             dns-serv
 #         p_address 123.132.123.123  555.555.555.555                     555.555.555.555                         
-printf '\n%11s   %-10s%-17s%-17s%-19s%-s' "local-sys" "lan-nic" "lan-ip" "lan-gateway" "domain" "dns-serv"
-printf '\n%11s   %-10s%-17s%-17s%-19s%-s' "$local_sys" "$local_nic" "$local_ip" "$local_gateway" "$local_name" "$local_dns"
+printf '\n%11s   %-10s%-17s%-17s%-17s%-s' "local-sys" "lan-nic" "lan-ip" "lan-gateway" "dns-serv" "domain"
+printf '\n%11s   %-10s%-17s%-17s%-17s%-s' "$local_sys" "$local_nic" "$local_ip" "$local_gateway" "$local_dns" "$local_name"
 echo
 echo
 [[ -n $p_wait && $(local_smart_exec whoami) =~ "root" ]] &&local_smart_exec "nmap -traceroute -Pn -sn $p_address" |grep -vEi "Nmap.*done.*IP.*address.*scanned |Starting.*Nmap.*nmap.*org |^$" &&echo #2>/dev/null

@@ -69,7 +69,7 @@ print_help(){
 echo
 cat <<'EOF'
 nif.sh (network info shell)
-ver:0.7.5.20211202
+ver:0.7.6.20211216
 用于检测linux的[tcp/udp端口状态] [延时] [带宽] [路由追踪]
 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/nif.sh
 快速使用: ① cd切换到下载目录 ;② 给与执行权限chmod +x ./nif.sh ;③ 执行./nif.sh -bump
@@ -136,7 +136,7 @@ HOP RTT     ADDRESS
     -exe[cution] :用本脚本在远端机执行命令 -exe:'cat /etc/os-release' -exe'if true ;then ping -c 8 qq.com >./ping.log ;fi &'
     -[nci]-[tucif] :指定检测方式和待检测端口(默认是利用本机的ssh客户端，类似利用telnet,只能检测tcp)
         n指nmap,c指socat,i指iperf3,t指tcp,u指udp .对-[nci]-后面的部分 :c指远端上socat,i指远端机上iperf,f指远端iptables转发设置
-        对本端机和远端机,ncituf参数逻辑上可以自由组合,但有些组合是没有意义的。一些示例：
+        对本端机和远端机,ncituf参数逻辑上可以自由组合,但有些组合是没有意义的。一些示例 :
         --:22   默认方式timeout 3 ssh -oBatchMode=yes -oStrictHostKeyChecking=no a_uuid_str@address" -v -p22 检测22(仅tcp)
                 会得到established refused timeout三种结果,established说明是在线状态。若需要更详细可使用nmap且可以检测udp
         --:22,23,8086-8088 检测22 23 8086 8087 8088.可以使用[,]隔离来指定多个,也可同时使用[-]来给定一个范围.下同
@@ -223,7 +223,7 @@ cat<<'EOF'
 
              *
        *   *                    nif.sh
-     *    \* / *                version :0.7.6.20211204
+     *    \* / *                version :0.7.6.20211216
        * --.:. *                by :haif
       *   * :\ -                <shenzhen-fistbump-2021-12-02>
         .*  | \
@@ -279,7 +279,7 @@ trap 'cc_exit' INT
 
 
 #2 参数解析与获取
-#2.1 定义参数匹配规则：
+#2.1 定义参数匹配规则 :
 __='[:]?'  #ke[:]?value，定义用来将key和value进行分割的符号
 re_ver='version'
 re_help='help'
@@ -292,7 +292,7 @@ re_user='user'
 re_user_v='\\S+'
 re_exe='execution'
 re_exe_v='\\S+'
-re_nif="scan$__"'[nic]{0,3}-[tucif]{0,5}'  #完整表达式：scan:ni-tunif，以-为界。"ni-…"为本端及操作符：n指安装(使用)nmap，i指iperf3。 "…-tunif"为远端机操作符：器中t表示指定待口为tcp，u指udp，n、i指安装(使用)nmap、iperf3，f表示forward(iptables)转发
+re_nif="scan$__"'[nic]{0,3}-[tucif]{0,5}'  #完整表达式 :scan:ni-tunif，以-为界。"ni-…"为本端及操作符 :n指安装(使用)nmap，i指iperf3。 "…-tunif"为远端机操作符 :器中t表示指定待口为tcp，u指udp，n、i指安装(使用)nmap、iperf3，f表示forward(iptables)转发
 re_nif_v='([0-9]{1,5}[-,]?)+'
 re_port='([0-9]{1,5}[-,]?)+'  #端口参数的快速输入方式（不用加任何参数前缀符号）
 re_count='count'
@@ -335,7 +335,7 @@ re_log_v='\\S+'
 #printf "."  # echo "==2.1==="
 
 
-#2.2 参数可用的表达方式(例如简写)的调校：
+#2.2 参数可用的表达方式(例如简写)的调校 :
 tmpss=$*
 set -- " ${tmpss// /   } "
 set -- "$(echo "$*" |gawk -v matched=" --?v | -?-?ver(sion)? " -v obj=" $re_ver " '{gsub(matched,obj); print $0}')";
@@ -383,7 +383,7 @@ set -- "$(echo "$*" |gawk -v matched=" -log?$__" -v obj=" $re_log:" '{gsub(match
 #printf "."  # echo "==2.2==="
 
 
-#2.3 参数检查(是否重复、和不可识别)：
+#2.3 参数检查(是否重复、和不可识别) :
 EXECUTING="$(echo executing: "$0" "$*" |tr -s ' ')"
 START_PWD="pwd: $(pwd)"
 def_exit() {  #def_exit $1(设置的$?值) $2(退出提示信息)
@@ -407,19 +407,19 @@ for i in "$__$re_ver"            "$__$re_help"                 "$re_address$__$r
          "$__$re_elsu"           "$re_timeout$__$re_timeout_v" "$__$re_wait"                 "$__$re_bump"       "$re_log$__$re_log_v"
 do
     mtch=$(echo "$*" |tr -s ' ' |tr ' ' '\n' |gawk -v keyv="^$i$" '$0~keyv{print $0}')  #将n个参数切断为n行进行匹配
-    [[ $(echo "$mtch" |wc -l) -gt 1 ]] &&def_exit 2 "参数项重复：$(echo "$mtch" |tr "\n" '  ')"  #如果匹配的有超过1行，说明参数有重复
+    [[ $(echo "$mtch" |wc -l) -gt 1 ]] &&def_exit 2 "参数项重复 :$(echo "$mtch" |tr "\n" '  ')"  #如果匹配的有超过1行，说明参数有重复
     [[ $(echo "$mtch" |wc -l) -lt 1 ]] &&continue  #如果不足一行，说明参数为空，直接跳过
-    loop_matched[loop_i]=$(echo "$mtch" |gawk -v sour="${i%%"$__"*}$__" '{sub(sour,"") ;print $0}')  #将key_re和$__的表达式匹配的部分删除。（截取$__前面部分：${i%"$__"*},最前面部分：${i%%"$__"*}，截取$__后的：${i#*"$__"} 最后的：${i##*"$__"} http://c.biancheng.net/view/1120.html）
+    loop_matched[loop_i]=$(echo "$mtch" |gawk -v sour="${i%%"$__"*}$__" '{sub(sour,"") ;print $0}')  #将key_re和$__的表达式匹配的部分删除。（截取$__前面部分 :${i%"$__"*},最前面部分 :${i%%"$__"*}，截取$__后的 :${i#*"$__"} 最后的 :${i##*"$__"} http://c.biancheng.net/view/1120.html）
     #echo $loop_i "${loop_matched[$loop_i]}"    #debug
     ((loop_i =loop_i +1))
     loop_lave=$(echo "$loop_lave" |gawk -v sour='\\s'"$i"'\\s' '{gsub(sour,"") ;print $0}')  #'\\s'"$i"'\\s' 表示在正则表达式$i前后，再添加空字符匹配，这样避免从非空格开始匹配
 done
 #echo #loop_lave "$loop_lave"  #debug
-[[ -n ${loop_lave// /} ]] &&def_exit 2 "参数无法识别：$(echo "$loop_lave" |tr -s ' ')"  #使用了双斜杠，将所有空格替换掉，然后做空否检查
+[[ -n ${loop_lave// /} ]] &&def_exit 2 "参数无法识别 :$(echo "$loop_lave" |tr -s ' ')"  #使用了双斜杠，将所有空格替换掉，然后做空否检查
 #printf "."  # echo "==2.3==="
 
 
-#2.4 参数获取，版本、帮助、log、与运行时提醒信息输出。消耗两个参数（-h -v）：
+#2.4 参数获取，版本、帮助、log、与运行时提醒信息输出。消耗两个参数（-h -v） :
 [[ -n "${loop_matched[1]}" ]] &&print_version &&exit 0
 [[ -n "${loop_matched[2]}" ]] &&print_help &&exit 0
 p_uuid='92c562a0-3ddd-11ec-9bbc-0242ac130002'
@@ -459,8 +459,8 @@ p_log=${loop_matched[30]}
 #printf "."  # echo "==2.4==="
 
 
-#2.5 设置参数的默认值、以及一些额外的预处理，消耗七个参数（p_addr p_nif p_ports p_epass p_ersu p_elso p_elsu），新增三个参数（nif_localop nif_remoteop nif_ports）：
-[[ -n $p_addr && -n $p_address ]] &&def_exit 2 "参数项重复： $p_addr   $re_address:$p_address"  #p_addr为p_address的快速输入方式所获取的值
+#2.5 设置参数的默认值、以及一些额外的预处理，消耗七个参数（p_addr p_nif p_ports p_epass p_ersu p_elso p_elsu），新增三个参数（nif_localop nif_remoteop nif_ports） :
+[[ -n $p_addr && -n $p_address ]] &&def_exit 2 "参数项重复 : $p_addr   $re_address:$p_address"  #p_addr为p_address的快速输入方式所获取的值
 [[ -n $p_addr && -z $p_address ]] &&p_address=$p_addr
 [[ -z $p_addr && -z $p_address ]] &&p_address='localhost' &&sign_rewrote_addr=true
 [[ -z $p_sp ]] &&p_sp=22 &&sign_rewrote_sp=true  #ssh服务缺省端口号
@@ -477,14 +477,14 @@ nif_ports=$(echo "$nif_tmp" |gawk -v sour="$nif_remoteop" '{sub(sour,"") ;print 
 [[ $nif_localop = "s" &&! $nif_remoteop =~ "t" ]]  &&def_exit 2 "$p_nif默认ssh只能扫描tcp"
 [[ $nif_remoteop =~ "f" &&! $nif_remoteop =~ "c"|"i" ]]  &&def_exit 2 "$p_nif你对远端机指定了forward，但未指定iperf3或socat进行侦听"
 #[[ ! $nif_remoteop =~ "f" ]]  &&nif_remoteop=$nif_remoteop'f'  #因为一个已知问题，多此开关socat时，后面的socat会开启失败，所以只打开一个socat,然后使用iptables来吧不同端口转发上来
-[[ -n $nif_ports && -n $p_ports ]] &&def_exit 2 "参数项重复： $p_ports   $p_nif"  #p_ports为端口的快速输入方式所获取的值
+[[ -n $nif_ports && -n $p_ports ]] &&def_exit 2 "参数项重复 : $p_ports   $p_nif"  #p_ports为端口的快速输入方式所获取的值
 [[ -z $nif_ports && -n $p_ports ]]  &&nif_ports=$p_ports
 [[ -z $p_count || $p_count -lt 1 ]] &&p_count=2  #设置测试试延时的最小、缺省时次数
 [[ -z $p_key ]] &&p_key=$p_null
-[[ -n $p_epass && -n $p_pass ]] &&def_exit 2 "参数项重复： $p_epass  $p_pass"  #如果参数既指定了密码，又指定了从输入中获取密码，则判断为参数重复
-[[ -n $p_ersu && -n $p_rsu ]]  &&def_exit 2 "参数项重复： $p_ersu  $p_rsu"
-[[ -n $p_elso && -n $p_lso ]]  &&def_exit 2 "参数项重复： $p_elso  $p_lso"
-[[ -n $p_elsu && -n $p_lsu ]]  &&def_exit 2 "参数项重复： $p_elsu  $p_lsu"
+[[ -n $p_epass && -n $p_pass ]] &&def_exit 2 "参数项重复 : $p_epass  $p_pass"  #如果参数既指定了密码，又指定了从输入中获取密码，则判断为参数重复
+[[ -n $p_ersu && -n $p_rsu ]]  &&def_exit 2 "参数项重复 : $p_ersu  $p_rsu"
+[[ -n $p_elso && -n $p_lso ]]  &&def_exit 2 "参数项重复 : $p_elso  $p_lso"
+[[ -n $p_elsu && -n $p_lsu ]]  &&def_exit 2 "参数项重复 : $p_elsu  $p_lsu"
 #[[ (-n $p_epass && -z $p_pass) ||(-n $p_ersu && -z $p_rsu) ||(-n $p_elso && -z $p_lso) ||(-n $p_elsu && -z $p_lsu)]] &&echo
 [[ -n $p_epass && -z $p_pass ]] &&read -r -s -p "Enter the ssh password : " p_epass &&echo &&p_pass=$p_epass  #将输入的转存
 [[ -n $p_ersu && -z $p_rsu ]] &&read -r -s -p "Enter the remote su-command password : " p_ersu &&echo &&p_rsu=$p_ersu
@@ -561,7 +561,7 @@ fi
 
 
 #3 设计本端的灵巧执行函数、处理参数对本端软件指定的动作
-#3.1 设计灵巧执行函数local_smart_exec，将对sudo、su -c、expect、ubuntu、debian、centos等环境信息的判断，进行包装解耦。消耗两个参数(p_lso p_lsu)：
+#3.1 设计灵巧执行函数local_smart_exec，将对sudo、su -c、expect、ubuntu、debian、centos等环境信息的判断，进行包装解耦。消耗两个参数(p_lso p_lsu) :
 expect_exec() {  #$0 $1(用户密码) $2(su命令密码) $3(需要执行的命令行的第一部分) $4(需要执行的命令行的第二部分) $5(需要执行的命令行的第三部分)
 /usr/bin/expect<<-EOF
 log_user 0
@@ -730,7 +730,7 @@ elif [[ $p_le =~ r|rm|remove ]] ;then
 elif  [[ -z $p_le ]] ;then
     expect_local_motion="leave-it"
 else
-    def_rl_exit "参数$re_le的值无法识别：$p_le"
+    def_rl_exit "参数$re_le的值无法识别 :$p_le"
 fi >/dev/null 2>&1
 #printf "."  # echo "==3.2.2==="
 
@@ -754,7 +754,7 @@ elif [[ $p_lp =~ r|rm|remove ]] ;then
 elif  [[ -z $p_lp ]] ;then
     pass_local_motion="leave-it"
 else
-    def_rl_exit "参数$re_lp的值无法识别：$p_lp"
+    def_rl_exit "参数$re_lp的值无法识别 :$p_lp"
 fi >/dev/null 2>&1
 #printf "."  # echo "==3.2.3==="
 
@@ -778,7 +778,7 @@ elif [[ $p_ln =~ r|rm|remove ]] ;then
 elif  [[ -z $p_ln ]] ;then
     nmap_local_motion="leave-it"
 else
-   def_rl_exit 3 "参数$re_ln的值无法识别：$p_ln"
+   def_rl_exit 3 "参数$re_ln的值无法识别 :$p_ln"
 fi >/dev/null 2>&1
 #printf "."  # echo "==3.2.4==="
 
@@ -802,7 +802,7 @@ elif [[ $p_li =~ r|rm|remove ]] ;then
 elif  [[ -z $p_li ]] ;then
     iperf3_local_motion="leave-it"
 else
-    def_rl_exit 3 "参数$re_li的值无法识别：$p_li"
+    def_rl_exit 3 "参数$re_li的值无法识别 :$p_li"
 fi >/dev/null 2>&1
 #printf "."  # echo "==3.2.5==="
 
@@ -826,12 +826,12 @@ elif [[ $p_lc =~ r|rm|remove ]] ;then
 elif  [[ -z $p_lc ]] ;then
     socat_local_motion="leave-it"
 else
-    def_rl_exit 3 "参数$re_lc的值无法识别：$p_lc"
+    def_rl_exit 3 "参数$re_lc的值无法识别 :$p_lc"
 fi >/dev/null 2>&1
 printf "."  # echo "==3.2.6==="
 
 #4 设计远端的灵巧执行函数、处理参数对远端软件指定的动作
-#4.1 设计灵巧执行函数remote_smart_exec，将对sudo、su -c、expect、ubuntu、debian、centos等环境信息的判断，进行包装解耦，消耗四个参数(p_sp p_user p_key p_pass p_rsu)：
+#4.1 设计灵巧执行函数remote_smart_exec，将对sudo、su -c、expect、ubuntu、debian、centos等环境信息的判断，进行包装解耦，消耗四个参数(p_sp p_user p_key p_pass p_rsu) :
 tmp1=''
 tmp2=''
 tmp3=''
@@ -869,7 +869,7 @@ remote_sys=''
 [[ $(eval "$remote_exec_pre" 'cat /etc/os-release|grep -o centos' 2>/dev/null) =~ "centos" ]] &&remote_sys=centos
 [[ $(eval "$remote_exec_pre" 'cat /etc/os-release|grep -o ubuntu' 2>/dev/null) =~ "ubuntu" ]] &&remote_sys=ubuntu
 [[ $(eval "$remote_exec_pre" 'cat /etc/os-release|grep -o debian' 2>/dev/null) =~ "debian" ]] &&remote_sys=debian
-[[ -n $pass_local ]] &&comment_tmp="本端sshpass:未安装"
+[[ -z $pass_local ]] &&comment_tmp="本端sshpass:未安装"
 [[ -z $remote_sys && ($nif_remoteop =~ "c"|"i" || -n $p_exe) ]] &&def_rl_exit 4 "远端$p_address系统不能识别或无法联机[ssh端口$p_sp] [用户$p_user] [$comment_tmp]"
 remote_smart_cp() {  #$0 $1(本端文件) $2(远端保存路径)
     if [[ -z $2 ]] ;then
@@ -980,7 +980,7 @@ elif [[ $p_rn =~ r|rm|remove ]] ;then
 elif  [[ -z $p_rn ]] ;then
     nmap_remote_motion="leave-it"
 else
-    def_rr_rl_exit 4 "参数$re_rn的值无法识别：$p_rn"
+    def_rr_rl_exit 4 "参数$re_rn的值无法识别 :$p_rn"
 fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.2==="
 
@@ -1004,7 +1004,7 @@ elif [[ $p_ri =~ r|rm|remove ]] ;then
 elif  [[ -z $p_ri ]] ;then
     iperf3_remote_motion="leave-it"
 else
-    def_rr_rl_exit 4 "参数$re_ri的值无法识别：$p_ri"
+    def_rr_rl_exit 4 "参数$re_ri的值无法识别 :$p_ri"
 fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.3==="
 
@@ -1028,7 +1028,7 @@ elif [[ $p_rc =~ r|rm|remove ]] ;then
 elif  [[ -z $p_rc ]] ;then
     socat_remote_motion="leave-it"
 else
-    def_rr_rl_exit 4 "参数$re_rc的值无法识别：$p_rc"
+    def_rr_rl_exit 4 "参数$re_rc的值无法识别 :$p_rc"
 fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.4==="
 
@@ -1052,7 +1052,7 @@ elif [[ $p_rf =~ disable|dis|d|0 ]] ;then
 elif [[ -z $p_rf ]] ;then
     fwdset_remote_motion="leave-it"
 else
-    def_rr_rl_exit 4 "参数$re_rf的值无法识别：$p_rf"
+    def_rr_rl_exit 4 "参数$re_rf的值无法识别 :$p_rf"
 fi >/dev/null 2>&1
 #printf "."  # echo "==4.3.5==="
 
@@ -1508,7 +1508,7 @@ elif [[ $nif_localop =~ "s"|"n" &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "i" &&
         fi
         tmp_ssif=$(ssh_scan_tcp "$1")'/iperf3'
         echo "$tmp_ssif"
-        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     latency_tcp5() {
         fwdrl_add t "$1" "$iperf3sv_port"
@@ -1519,7 +1519,7 @@ elif [[ $nif_localop =~ "s"|"n" &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "i" &&
         fi
         tmp_ssiflt=$(ssh_scan_tcp_latency "$1")
         echo "$tmp_ssiflt"
-        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     state_tcp="state_tcp5"
     latency_tcp="latency_tcp5"
@@ -1560,7 +1560,7 @@ elif [[ $nif_localop =~ "s"|"n" &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "c" &&
         fi
         tmp_sscf=$(ssh_scan_tcp "$1")'/socat'
         echo "$tmp_sscf"
-        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     latency_tcp9() {
         fwdrl_add t "$1" "$socatsv_tcp_port"
@@ -1571,7 +1571,7 @@ elif [[ $nif_localop =~ "s"|"n" &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "c" &&
         fi
         tmp_sscflt=$(ssh_scan_tcp_latency "$1")
         echo "$tmp_sscflt"
-        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-latency,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-latency,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     state_tcp="state_tcp9"
     latency_tcp="latency_tcp9"
@@ -1607,7 +1607,7 @@ elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t" &&$nif_remot
         fi
         tmp_nif=$(nmap_scan t "$1")'/iperf3'
         echo "$tmp_nif"
-        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     state_tcp="state_tcp12"
 elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t" &&$nif_remoteop =~ "c" && -n $socat_remote &&(! $nif_remoteop =~ "i" ||-z $iperf3_remote) &&! $nif_remoteop =~ "f" ]] ;then
@@ -1631,7 +1631,7 @@ elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "t" &&$nif_remot
         fi
         tmp_ncf=$(nmap_scan t "$1")'/socat'
         echo "$tmp_ncf"
-        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     state_tcp="state_tcp14"
 fi
@@ -1663,7 +1663,7 @@ elif [[ $nif_localop =~ "n" &&-n $nmap_local &&$nif_remoteop =~ "u" &&$nif_remot
         fi
         tmp_ncuf=$(nmap_scan u "$1")'/socat'
         echo "$tmp_ncuf"
-        fwdrl_del u "$1" "$socatsv_udp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试udp:$1>$socatsv_udp_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del u "$1" "$socatsv_udp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试udp:$1>$socatsv_udp_port-state,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     state_udp="state_udp16"
 fi
@@ -1697,7 +1697,7 @@ elif [[ $nif_localop =~ "c" &&-n $socat_local &&$nif_remoteop =~ "t" &&$nif_remo
         fi
         tmp_ccf=$(socat_online_scan_latency t "$1")
         echo "$tmp_ccf"
-        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-latency,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$socatsv_tcp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$socatsv_tcp_port-latency,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     latency_tcp="latency_tcp19"
 fi
@@ -1724,7 +1724,7 @@ elif [[ $nif_localop =~ "c" &&-n $socat_local &&$nif_remoteop =~ "u" &&$nif_remo
         fi
         tmp_ccuf=$(socat_online_scan_latency u "$1")
         echo "$tmp_ccuf"
-        fwdrl_del u "$1" "$socatsv_udp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试udp:$1>$socatsv_udp_port-latency,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del u "$1" "$socatsv_udp_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试udp:$1>$socatsv_udp_port-latency,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     latency_udp="latency_udp21"
 fi
@@ -1760,7 +1760,7 @@ elif [[ $nif_localop =~ "i" &&-n $iperf3_local &&$nif_remoteop =~ "t" &&$nif_rem
         fi
         tmp_iif=$(iperf3_online_scan_tcp_bandwidth "$1")
         echo "$tmp_iif"
-        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+        fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
     }
     bandwidth_tcp="bandwidth_tcp25"
 fi
@@ -1789,7 +1789,7 @@ elif [[ $nif_localop =~ "i" &&-n $iperf3_local &&$nif_remoteop =~ "u" &&$nif_rem
         tmp_iiuf="$result_fwdrl_add"
         if [[ $tmp_iiuf =~ "false"|"exists" ]] ;then
             echo "$tmp_iiuf"
-            fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$cmd_del"
+            fwdrl_del t "$1" "$iperf3sv_port" >/dev/null 2>&1 ||def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$cmd_del"
             return 1
         fi
         tmp_iiuf=$(iperf3_online_scan_udp_bandwidth "$1")
@@ -1805,12 +1805,12 @@ elif [[ $nif_localop =~ "i" &&-n $iperf3_local &&$nif_remoteop =~ "u" &&$nif_rem
             tmp4_iiuf=$cmd_del
         fi
         if [[ $tmp1_iiuf = 1 &&$tmp2_iiuf = 0 ]] ;then
-            def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$tmp3_iiuf"
+            def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$tmp3_iiuf"
         elif [[ $tmp1_iiuf = 0 &&$tmp2_iiuf = 1 ]] ;then
-            :  #def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试udp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧0\n规则删除命令：$tmp4_iiuf"
+            :  #def_sv_rr_rl_exit 6 "$nif_localop-$nif_remoteop测试udp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧0\n规则删除命令 :$tmp4_iiuf"
         elif [[ $tmp1_iiuf = 1 &&$tmp2_iiuf = 1 ]] ;then
-            def_sv_rr_rl_exit -1 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$tmp3_iiuf"
-            def_sv_rr_rl_exit  6 "$nif_localop-$nif_remoteop测试udp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令：$tmp4_iiuf"
+            def_sv_rr_rl_exit -1 "$nif_localop-$nif_remoteop测试tcp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$tmp3_iiuf"
+            def_sv_rr_rl_exit  6 "$nif_localop-$nif_remoteop测试udp:$1>$iperf3sv_port-bandwidth,远端机-删除$p_address:iptables规则失败.得去手动检查!囧\n规则删除命令 :$tmp4_iiuf"
         fi
     }
     bandwidth_udp="bandwidth_udp27"
@@ -1940,12 +1940,12 @@ def_sv_rr_rl_exit -1 "byebye"  2>/dev/null
     echo "添加udp转发 :sudo iptables -t nat -A PREROUTING -p udp -i ens160 -d 1.2.3.4 --dport 22200 -j DNAT --to 1.2.3.4:22201"
     echo "删除tcp转发 :sudo iptables -t nat -D PREROUTING -p tcp -i ens160 -d 1.2.3.4 --dport 22200 -j DNAT --to 1.2.3.4:22201"
     echo "删除udp转发 :sudo iptables -t nat -D PREROUTING -p udp -i ens160 -d 1.2.3.4 --dport 22200 -j DNAT --to 1.2.3.4:22201"
-    echo "安装nmap：(centos) sudo yum install -y nmap         或(ubuntu) sudo apt install -y nmap"
-    echo "安装iperf3：(centos) sudo yum install -y iperf3     或(ubuntu) sudo apt install -y iperf3"
-    echo "安装socat：(centos) sudo yum install -y socat       或(ubuntu) sudo apt install -y socat"
-    echo "卸载nmap：(centos) sudo yum remove -y nmap          或(ubuntu) sudo apt remove -y nmap"
-    echo "卸载iperf3：(centos) sudo yum remove -y iperf3      或(ubuntu) sudo apt remove -y iperf3"
-    echo "卸载socat：(centos) sudo yum remove -y socat        或(ubuntu) sudo apt remove -y socat"
+    echo "安装nmap :(centos) sudo yum install -y nmap         或(ubuntu) sudo apt install -y nmap"
+    echo "安装iperf3 :(centos) sudo yum install -y iperf3     或(ubuntu) sudo apt install -y iperf3"
+    echo "安装socat :(centos) sudo yum install -y socat       或(ubuntu) sudo apt install -y socat"
+    echo "卸载nmap :(centos) sudo yum remove -y nmap          或(ubuntu) sudo apt remove -y nmap"
+    echo "卸载iperf3 :(centos) sudo yum remove -y iperf3      或(ubuntu) sudo apt remove -y iperf3"
+    echo "卸载socat :(centos) sudo yum remove -y socat        或(ubuntu) sudo apt remove -y socat"
     echo "版本查看 :expect -V   sshpass -V   nmap -V   iperf3 -v   socat -V"
     echo "系统存在的服务查看 :sudo ss -ntulp |grep iperf3      或sudo ss -ntulp |grep socat"
     echo "杀掉服务进程:sudo ss -ntulp查看对于端口服务的pid,然后 kill pid"
@@ -1963,17 +1963,17 @@ cat <<'EOF'
 10.1 nmap笔记
 man主页 :https://linux.die.net/man/1/nmap
 nmap检测路由和扫描udp都需要root权限
-扫描tcp端口：nmap -p 443 1.2.3.4
-扫描udp端口：sudo  nmap -p 443 1.2.3.4 -sU
+扫描tcp端口 :nmap -p 443 1.2.3.4
+扫描udp端口 :sudo  nmap -p 443 1.2.3.4 -sU
 同时扫描tcp和udp :sudo  nmap -p 443 1.2.3.4 -sT -sU
 
 仅查询dns解析
-使用系统的dns解析查询：
+使用系统的dns解析查询 :
 nmap -Pn -sn --system-dns 1.2.3.4
-手动指定dns(8.8.8.8)解析查询：
+手动指定dns(8.8.8.8)解析查询 :
 nmap -Pn -sn --dns-servers 8.8.8.8 1.2.3.4
 
-仅追踪路由：
+仅追踪路由 :
 sudo nmap abc.com -traceroute -Pn -sn
 -Pn :无ping
 -sn :跳过端口扫描
@@ -1983,17 +1983,17 @@ sudo nmap abc.com -traceroute -Pn -sn
 
 
 10.2 随机未使用端口方法
-获取一个：
+获取一个 :
 comm -23 <(seq 49152 65535 |sort) <(ss -Htan |cut -d: -f2 |sort -u) |shuf |head -n 1
-获取三个：
+获取三个 :
 comm -23 <(seq 49152 65535 |sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 3
 
 
 10.3 nping笔记
 nping是nmap的一个子功能，也可以的单独安装
 man主页 :https://linux.die.net/man/1/nping
-安装：rpm -vh https://nmap.org/dist/nping-0.7.70-1.x86_64.rpm
-卸载：rpe -e  nping-0.7.70-1.x86_64
+安装 :rpm -vh https://nmap.org/dist/nping-0.7.70-1.x86_64.rpm
+卸载 :rpe -e  nping-0.7.70-1.x86_64
 测tcp :nping abc.com -p 4434          (或测 nping abc.com -p 4434 --tcp-connect)
 测udp :nping --udp 1.2.3.4 -p 443    (一般不会由结果，udp需要使用回声模式)
 指定测试次数 :nping --tcp-connect google.com -p 443 -c 2    (不需要root)
@@ -2001,7 +2001,7 @@ man主页 :https://linux.die.net/man/1/nping
 
 回声模式，服务端(需要root,普通模式不需要):
 sudo nping --es asdf --ep 443 --once        (--es 为服务端,密码为asdf，--once为一次性服务)
-客户端：
+客户端 :
 sudo nping --udp --ec asdf abc.com --ep 443   (--ec 为客户端，密码为asdf)
 sudo nping --tcp --ec asdf abc.com --ep 443
 *nping回声模式做udp测试貌似不支持nat
@@ -2029,7 +2029,7 @@ iperf3 -c 1.2.3.4 -p 443 -u -b 300M -R  测试udp下行（服务器向客户机�
 10.5 nc笔记
 参考 :https://cikeblog.com/iptables.html
 参考 :https://serverfault.com/questions/512722/how-to-automatically-close-netcat-connection-after-data-is-sent
-nc版本有点多：bsd netcat   gnu netcat   ncat
+nc版本有点多 :bsd netcat   gnu netcat   ncat
 侦听udp :nc -lu 8888
 连接udp :nc -u 1.2.3.4 888
 nc -lu -w0 888
@@ -2041,8 +2041,8 @@ nc -lu -c hostname -p 443;date
 删除方法    :sudo iptables -t nat -D PREROUTING -p udp -i ens160 -d 1.2.3.4 --dport 80 -j DNAT --to 1.2.3.4:22
 添加tcp转发 :sudo iptables -t nat -A PREROUTING -p tcp -i ens160 -d 1.2.3.4 --dport 80 -j DNAT --to 1.2.3.4:22
 删除方法    :sudo iptables -t nat -D PREROUTING -p tcp -i ens160 -d 1.2.3.4 --dport 80 -j DNAT --to 1.2.3.4:22
-查看nat转发策略：iptables -tnat -nL
-或详细信息：iptables -t nat -nvL （带包数统计）
+查看nat转发策略 :iptables -tnat -nL
+或详细信息 :iptables -t nat -nvL （带包数统计）
 
 转发要生效，需要开启forward(置1)
 查看forward设置状态 :cat /proc/sys/net/ipv4/ip_forward
@@ -2059,18 +2059,18 @@ date +"%T.%3N" ;echo x |socat -t 0 - udp:abc.com:5000;date +"%T.%3N"
 socat -t0 PIPE udp-recvfrom:5000
 
 
-服务端：
+服务端 :
 tcp :socat TCP4-LISTEN:2000,fork EXEC:"echo hello"
 udp :socat UDP4-LISTEN:2000,fork EXEC:"echo hello"
 不加fork连接一次后会自动 :socat TCP4-LISTEN:2000 EXEC:date
-客户端：
+客户端 :
 udp :time echo x |socat -t0 - udp:abc.com:2000
 tcp :time echo x |socat     - tcp:1.2.3.4:2000
 
 
 10.8 netperf笔记
 github地址 :https://github.com/HewlettPackard/netperf
-netperf编译安装方法：
+netperf编译安装方法 :
 cd到源代码目录
 ./configure --enable-demo=yes
 make &&makeinstall
@@ -2081,7 +2081,7 @@ netserver -p 222 -4
 
 10.9 其他
 echo $aaa    没有换行符，结果不会换行
-需要换行请加双引号：echo "$aaa"
+需要换行请加双引号 :echo "$aaa"
 参考 :https://serverfault.com/questions/179200/difference-beetween-dnat-and-redirect-in-iptables
 
 date显示纳秒格式

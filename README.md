@@ -1,5 +1,5 @@
 ## latencysee.sh
-用于网络"ping"的延时 支持记录tcp udp icmp apr协议  
+类似"ping"的网络延时检测  支持tcp udp icmp apr协议  
   
 快速使用  
 ① 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/net/latencysee.sh  

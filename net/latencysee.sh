@@ -161,20 +161,20 @@ func_kill() {
         echo
         echo "---------------------------------------------------------------------------------------"
     elif grep -q '^[[:digit:]]*$' <<< "$KILL" ;then   #是个数字
-        kill -TERM -- -"$KILL" && def_warning "已杀死进程组 $KILL" \
-        && grep -rw "$KILL" "$PATH_WORK" |cut -d: -f1 |xargs rm -f  #删除含有记录此 进程组id的文件
+        grep -rw "$KILL" "$PATH_WORK" |cut -d: -f1 |xargs rm -f  #删除含有记录此 进程组id的文件
+        kill -TERM -- -"$KILL" && def_warning "已杀死进程组 $KILL"
     else
         def_exit 2 "-k 的参数值无法识别 $KILL 或找不到对应pgid(进程组id)的记录文件$PGID_FILE_TO_KILL"
     fi
 }
 
 
-#func_trap_def() {
+func_trap_def() {
 #    echo "asdf"
-#    [[ -f $PGID_FILE ]] && rm -f "$PGID_FILE"
-#    kill -TERM -- -"$PGID_THIS"
-#}
-#trap  func_trap_def SIGINT    #如果程序退出 定义扫尾工作 以避免后面会使用的后台进程不会正常停止   #如果有后台进程 貌似不支持
+    [[ -f $PGID_FILE ]] && rm -f "$PGID_FILE" &&def_warning "已清理pgid记录文件$PGID_FILE"
+    kill -TERM -- -"$PGID_THIS"
+}
+trap  func_trap_def SIGINT    #如果程序退出 定义扫尾工作 以避免后面会使用的后台进程不会正常停止   #如果有后台进程 貌似不支持
 
 
 
@@ -598,16 +598,18 @@ func_logging_main(){
     JUDGES_TOTAL=1    #每论检测发多少次ping包
     JUDGES_OK=1     #收到多少个包 判定为是连通的 进而按收到的包数计算平均延时
     #OK_JUDGED='1/1'  #n/m格式 ,表示：每轮检测发m次ping包 ,如果收到了n~m个返回 ,则判定为检测ok ,否则判定本轮为loss
-    if ! grep -q '^[[:digit:]]*$' <<< "$INTERVAL" ;then
+    if ! grep -qE '^([0-9]+\.)?[0-9]*$' <<< "$INTERVAL" ;then
         def_exit 1 "-i 参数的值不是个数字 $INTERVAL"
     fi
-    if ! grep -q '^[[:digit:]]*$' <<< "$CUT_TIME" ;then
-        def_exit 1 "-c 参数的值不是个数字 $CUT_TIME"
+    if ! grep -qE '^[0-9]*$' <<< "$CUT_TIME" ;then
+        def_exit 1 "-c 参数的值不是个整数 $CUT_TIME"
     fi
     TIME_TAG_NEXT=${CUT_TIME:-60}  #多久(秒)插入一次当前的时间 建议60的整数倍
     OK_NEXT=${INTERVAL:-1}  #如果上一轮检测ok ,等待几秒做下一轮检测
     LOSS_NEXT=${INTERVAL:-1}  #如果上一轮检测不通 ,等待几秒做下一轮检测
-    TIME_TAG_NEXT=$(echo "$TIME_TAG_NEXT" |gawk '{printf("%i\n",$1)}')  #取整
+    TIME_TAG_NEXT=$(echo "$TIME_TAG_NEXT" |gawk '{printf("%i\n",$1)}')  #去掉前面0开头 如090 变为90
+    #INTERVAL=$(echo "$INTERVAL" |gawk '{printf("%f.2\n",$1)}')  #去掉前面0开头 如090 变为90
+    #echo "===$TIME_TAG_NEXT=$OK_NEXT=$LOSS_NEXT=="
     if [[ $TIME_TAG_NEXT -lt 60 ]] ;then
         def_exit 1 "-c 参数的值不能小于60: $CUT_TIME"
     fi
@@ -617,7 +619,6 @@ func_logging_main(){
     DEST2=${DEST#*:}  #获取检测目标主机
     DEST2=${DEST2%%:*}
     DEST3=${DEST##*:}  #获取进程目标端口
-    #echo "===$TIME_TAG_NEXT=$OK_NEXT=$LOSS_NEXT=="
     #def_exit 0 "asdf"
     if [[ $DEST3 = "$DEST2" ]] ;then
         if [[ $DEST1 =~ tcp ]] ;then

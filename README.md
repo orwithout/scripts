@@ -13,6 +13,7 @@
 ./latencysee.sh   nping-tcp:ali1.fsbm.cc:19765  -t file   #使用nping测试ali1.fsbm.cc的tcp端口19765 如果要后台运行可增加参数 -t file  
 ./latencysee.sh   nping-udp:ali1.fsbm.cc:19765    #需依赖于对端udp服务会不会有回音 (推荐socat联机模式)  
 ./latencysee.sh   -h    #获取使用帮助  
+![这是图片](./net/latencysee.sh.png "Magic Gardens")
   
 ## nif.sh
 (newwork info)用于检测两台Linux之间 [端口状态] [延时] [带宽] [路由追踪]  

@@ -27,6 +27,7 @@ func_print_help() {
     echo "-t  -t console屏幕上显示结果 -t file 结果保存到文件 (文件保存在本脚本同目录的./latencysee.sh.work/中"
     echo "-k  -k socat-tcp:ali1.fsbm.cc:80杀掉对应后台进程  -k all杀掉所有本脚本的进程   或-k show 显示本脚本所有在运行的进程"
     echo "-s  与-k show 完全相同"
+    echo "-i  检测间隔 默认1秒"
     echo "-h  打印帮助"
     echo
     echo "更多用例: "
@@ -97,8 +98,8 @@ else
     shift
 fi
 
-while getopts 'd:t:k:sh' OPT; do
-	if grep -Ew '^-[dtksh]{1}' <<< "$OPTARG" ;then
+while getopts 'd:t:k:i:sh' OPT; do
+	if grep -Ew '^-[dtkish]{1}' <<< "$OPTARG" ;then
 		echo -e "\e[31m Error 1 : 程序已退出\e[0m" "参数格式错误 可能是指定了需要给值的参数你却没有给值 导致第二个参数的名$OPTARG被赋予成为了它的值"  >&2
 		exit 1
 	fi
@@ -106,6 +107,7 @@ while getopts 'd:t:k:sh' OPT; do
 		d)	DEST="$OPTARG";;
         t)  WRITETO="$OPTARG";;
         k)  KILL="$OPTARG";;
+        i)  INTERVAL="$OPTARG";;
         s)  KILL="show";;
 		h) 	func_print_help
 			exit 0
@@ -187,7 +189,7 @@ func_vsudo_init() {
 }
 
 func_pin_init() {
-    [[ $DEST1 =~ "icmp" ]] &&LOGGING_func='func_pingicmp'
+    [[ $DEST1 =~ "icmp" || $DEST1 = 'ping' ]] &&LOGGING_func='func_pingicmp'
     echo "(检测方法 ping $1 -c $JUDGES_TOTAL)"
 }
 func_pingicmp(){  #$1:目标主机地址  $2:端口    #返回$LOSS_MARK表示丢包  或一个数字 表示延时的毫秒数
@@ -204,7 +206,7 @@ func_arp_init() {
     if socat 2>&1 |grep -qEw 'command not found' ;then
         def_exit 3 "请先安装arping nping 方法(centos) yum install -y arping 或(ubuntu) apt install -y arping"
     fi
-    [[ $DEST1 =~ arp.*arp ]] && LOGGING_func='func_arping'
+    [[ $DEST1 =~ arp.*arp || $DEST1 = 'arping' ]] && LOGGING_func='func_arping'
     echo "(检测方法 arping $1 -c $JUDGES_TOTAL)"
 }
 func_arping(){  # $1:目标主机 $2:端口号   #返回$LOSS_MARK表示丢包  或一个数字 表示延时的毫秒数
@@ -225,8 +227,8 @@ func_arping(){  # $1:目标主机 $2:端口号   #返回$LOSS_MARK表示丢包  
 }
 
 func_ssh_init() {
-    [[ $DEST1 =~ "tcp" ]] && LOGGING_func='func_sshtcp'
-    echo "(检测方法 time timeout 8 ssh -oBatchMode=yes -oStrictHostKeyChecking=no 'uuid-9fa64886-71ef-11ec-90d6-0242ac120003'@$1 -p$2 -v *对某些服务延时会增加))"  #https://www.openssh.com/manual.html
+    [[ $DEST1 =~ "tcp" || $DEST1 = 'ssh' ]] && LOGGING_func='func_sshtcp'
+    echo "(检测方法 time timeout 8 ssh -oBatchMode=yes -oStrictHostKeyChecking=no 'uuid-9fa64886-71ef-11ec-90d6-0242ac120003'@$1 -p$2 -v  对某些服务延时会增加)"  #https://www.openssh.com/manual.html
 }
 func_sshtcp() {  #$1:目标主机地址  $2:端口    #返回$LOSS_MARK表示丢包  或一个数字 表示延时的毫秒数
     ok_sshping=0
@@ -291,7 +293,7 @@ func_mtr_init(){  #$1:测试类型 $2:主机地址  #初始化 MTR_maxTTL MTR_ty
         def_exit 3 "mtr检测类型不支持$DEST1 (支持tcp udp icmp)"
     fi
     LOGGING_func='func_mtr'
-    echo "(检测方法 $vSUDO traceroute $1 -q$JUDGES_TOTAL -w2 -n -m$MTR_maxTTL $MTR_type *mtr模式的回程都是icmp协议)"
+    echo "(检测方法 $vSUDO traceroute $1 -q$JUDGES_TOTAL -w2 -n -m$MTR_maxTTL $MTR_type  mtr模式的回程都是icmp协议)"
 }
 func_mtr(){  #$1:目标主机地址    #返回$LOSS_MARK表示丢包  或一个数字 表示延时的毫秒数
     #echo "$2 traceroute $1 -q$JUDGES_TOTAL -w2 -n -m$MTR_maxTTL $3"  #debug
@@ -363,7 +365,7 @@ func_socat(){  # $1:目标主机 $2:端口号   #返回$LOSS_MARK表示丢包  �
 
 func_pap_init() {
     LOGGING_func='func_papingtcp'
-    echo "(paping模式cpu占用会偏高 ./paping --nocolor $1 -p $2 -c $JUDGES_TOTAL -t 2000)"
+    echo "(检测方法 ./paping --nocolor $1 -p $2 -c $JUDGES_TOTAL -t 2000  发现paping对cpu占用偏高)"
 }
 func_papingtcp(){  #$1:目标主机地址  $2:端口    #返回$LOSS_MARK表示丢包  或一个数字 表示延时的毫秒数
     result_paping=$(./paping --nocolor "$1" -p "$2" -c "$JUDGES_TOTAL" -t 2000 2>&1 |tail -n 5)
@@ -594,8 +596,8 @@ func_logging_main(){
     JUDGES_TOTAL=1    #每论检测发多少次ping包
     JUDGES_OK=1     #收到多少个包 判定为是连通的 进而按收到的包数计算平均延时
     #OK_JUDGED='1/1'  #n/m格式 ,表示：每轮检测发m次ping包 ,如果收到了n~m个返回 ,则判定为检测ok ,否则判定本轮为loss
-    OK_NEXT=1  #如果上一轮检测ok ,等待几秒做下一轮检测
-    LOSS_NEXT=1  #如果上一轮检测不通 ,等待几秒做下一轮检测
+    OK_NEXT=${INTERVAL:-1}  #如果上一轮检测ok ,等待几秒做下一轮检测
+    LOSS_NEXT=${INTERVAL:-1}  #如果上一轮检测不通 ,等待几秒做下一轮检测
     TIME_TAG_NEXT=60  #多久(秒)插入一次当前的时间 建议60的整数倍
 
     DEST1=${DEST%%:*}  #获取进程方式

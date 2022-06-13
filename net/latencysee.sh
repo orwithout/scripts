@@ -27,7 +27,7 @@ func_print_help() {
     echo "-t  -t console屏幕上显示结果 -t file 结果保存到文件 (文件保存在本脚本同目录的./latencysee.sh.work/中"
     echo "-k  -k socat-tcp:ali1.fsbm.cc:80杀掉对应后台进程  -k all杀掉所有本脚本的进程   或-k show 显示本脚本所有在运行的进程"
     echo "-s  与-k show 完全相同"
-    echo "-i  检测间隔 默认1秒"
+    echo "-i  检测间隔秒数 -i 1 检测间隔1秒  -i 5 检测间隔5秒"
     echo "-h  打印帮助"
     echo
     echo "更多用例: "

@@ -15,7 +15,6 @@
 ./latencysee.sh   -h    #获取使用帮助  
 <br>
 <br>
-<br>
 二  nif.sh (network info shell)  ver :0.7.6.20211204  
 用于检测两台Linux之间 [端口状态] [延时] [带宽] [路由追踪]  
   

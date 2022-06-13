@@ -14,7 +14,7 @@
 ./latencysee.sh   nping-udp:ali1.fsbm.cc:19765    #需依赖于对端udp服务会不会有回音 (推荐socat联机模式)  
 ./latencysee.sh   -h    #获取使用帮助  
   
-## 二  nif.sh
+## nif.sh
 (newwork info)用于检测两台Linux之间 [端口状态] [延时] [带宽] [路由追踪]  
   
 快速使用  

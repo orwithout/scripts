@@ -1,5 +1,24 @@
-nif.sh (network info shell)  
-ver :0.7.6.20211204  
+一
+latencysee.sh  ver 20220613
+用于网络"ping"的延时 支持记录tcp udp icmp apr协议
+
+快速使用  
+① 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/net/latencysee.sh  
+② cd 进入到下载目录
+③ 给与执行权限 chmod +x ./latencysee.sh
+
+使用示例
+./latencysee.sh   -k all     #中止所有本脚本已运行的实例
+./latencysee.sh   ssh-tcp:qq.com:80      #ssh测试tcp端口延时 对某些服务延时会增加 (推荐nping模式)
+./latencysee.sh   nping-tcp:ali1.fsbm.cc:19765    #使用nping测试ali1.fsbm.cc的tcp端口19765 如果要后台运行可增加参数 -t file
+./latencysee.sh   nping-tcp:ali1.fsbm.cc:19765  -t file   #使用nping测试ali1.fsbm.cc的tcp端口19765 如果要后台运行可增加参数 -t file
+./latencysee.sh   nping-udp:ali1.fsbm.cc:19765    #需依赖于对端udp服务会不会有回音 (推荐socat联机模式)
+./latencysee.sh   -h    #获取使用帮助
+
+
+
+二
+nif.sh (network info shell)  ver :0.7.6.20211204  
 用于检测两台Linux之间 [端口状态] [延时] [带宽] [路由追踪]  
   
 快速使用  

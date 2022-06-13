@@ -27,7 +27,8 @@ func_print_help() {
     echo "-t  -t console屏幕上显示结果 -t file 结果保存到文件 (文件保存在本脚本同目录的./latencysee.sh.work/中"
     echo "-k  -k socat-tcp:ali1.fsbm.cc:80杀掉对应后台进程  -k all杀掉所有本脚本的进程   或-k show 显示本脚本所有在运行的进程"
     echo "-s  与-k show 完全相同"
-    echo "-i  检测间隔秒数 -i 1 检测间隔1秒  -i 5 检测间隔5秒"
+    echo "-i  指定检测间隔 例如-i 10指检测间隔为10秒 默认1秒"
+    echo "-c  指定结果输出的换行时间间隔 例如-c 120指每120秒输出一个换行符 默认60秒 建议取60的整数倍"
     echo "-h  打印帮助"
     echo
     echo "更多用例: "
@@ -98,8 +99,8 @@ else
     shift
 fi
 
-while getopts 'd:t:k:i:sh' OPT; do
-	if grep -Ew '^-[dtkish]{1}' <<< "$OPTARG" ;then
+while getopts 'd:t:k:i:c:sh' OPT; do
+	if grep -Ew '^-[dtkicsh]{1}' <<< "$OPTARG" ;then
 		echo -e "\e[31m Error 1 : 程序已退出\e[0m" "参数格式错误 可能是指定了需要给值的参数你却没有给值 导致第二个参数的名$OPTARG被赋予成为了它的值"  >&2
 		exit 1
 	fi
@@ -108,6 +109,7 @@ while getopts 'd:t:k:i:sh' OPT; do
         t)  WRITETO="$OPTARG";;
         k)  KILL="$OPTARG";;
         i)  INTERVAL="$OPTARG";;
+        c)  CUT_TIME="$OPTARG";;
         s)  KILL="show";;
 		h) 	func_print_help
 			exit 0
@@ -436,20 +438,20 @@ func_loggong_init() {
 func_logging_date() { # $1:回车换行方式 $2:检测方式:主机地址:端口    #异步 每到整点时间 输出一条日期-时间信息字符串
     while true ;do
         minute_inloggingdate=$(date +%M |gawk '{printf("%i\n",$1)}')
-        printf '%b' "$1$(date "+%Y-%m-%d-%H:%M:%S")-$2-单位 ms [组进程ID $PGID_THIS]"
-        (( minute_inloggingdate = (60-minute_inloggingdate)*60 ))
-        sleep $minute_inloggingdate
+        second_inloggingdate=$(date +%S |gawk '{printf("%i\n",$1)}')
+        printf '%b' "$1$(date "+%Y-%m-%d-%H:%M:%S")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
+        (( second_inloggingdate = (60-minute_inloggingdate)*60 - "$second_inloggingdate"))
+        sleep "$second_inloggingdate"
     done
 }
 
 func_logging_time() {
     sec_inloggingtime=$(date +%S |gawk '{printf("%i\n",$1)}')
+    (( sec_inloggingtime = TIME_TAG_NEXT - sec_inloggingtime ))
+    sleep $sec_inloggingtime
     while  true  ;do
-        (( sec_inloggingtime2 = TIME_TAG_NEXT - sec_inloggingtime ))
-        sleep $sec_inloggingtime2
-        sec_inloggingtime=$(date +%S)
-        printf '%b' "$1$(date +%M):$sec_inloggingtime"
-        sec_inloggingtime=$(date +%S |gawk '{printf("%i\n",$1)}')
+        printf '%b' "$1$(date +%M:%S)"
+        sleep "$TIME_TAG_NEXT"
     done
 }
 
@@ -596,15 +598,27 @@ func_logging_main(){
     JUDGES_TOTAL=1    #每论检测发多少次ping包
     JUDGES_OK=1     #收到多少个包 判定为是连通的 进而按收到的包数计算平均延时
     #OK_JUDGED='1/1'  #n/m格式 ,表示：每轮检测发m次ping包 ,如果收到了n~m个返回 ,则判定为检测ok ,否则判定本轮为loss
+    if ! grep -q '^[[:digit:]]*$' <<< "$INTERVAL" ;then
+        def_exit 1 "-i 参数的值不是个数字 $INTERVAL"
+    fi
+    if ! grep -q '^[[:digit:]]*$' <<< "$CUT_TIME" ;then
+        def_exit 1 "-c 参数的值不是个数字 $CUT_TIME"
+    fi
+    TIME_TAG_NEXT=${CUT_TIME:-60}  #多久(秒)插入一次当前的时间 建议60的整数倍
     OK_NEXT=${INTERVAL:-1}  #如果上一轮检测ok ,等待几秒做下一轮检测
     LOSS_NEXT=${INTERVAL:-1}  #如果上一轮检测不通 ,等待几秒做下一轮检测
-    TIME_TAG_NEXT=60  #多久(秒)插入一次当前的时间 建议60的整数倍
+    TIME_TAG_NEXT=$(echo "$TIME_TAG_NEXT" |gawk '{printf("%i\n",$1)}')  #取整
+    if [[ $TIME_TAG_NEXT -lt 60 ]] ;then
+        def_exit 1 "-c 参数的值不能小于60: $CUT_TIME"
+    fi
 
     DEST1=${DEST%%:*}  #获取进程方式
     #DEST1=${DEST1//[![:alnum:]]/}  #删除非字母非数字的字符
     DEST2=${DEST#*:}  #获取检测目标主机
     DEST2=${DEST2%%:*}
     DEST3=${DEST##*:}  #获取进程目标端口
+    #echo "===$TIME_TAG_NEXT=$OK_NEXT=$LOSS_NEXT=="
+    #def_exit 0 "asdf"
     if [[ $DEST3 = "$DEST2" ]] ;then
         if [[ $DEST1 =~ tcp ]] ;then
             DEST3='80'

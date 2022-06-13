@@ -1,6 +1,6 @@
 ## latencysee.sh
 类似"ping"的网络延时检测  支持tcp udp icmp apr协议  
-支持centos7 centos8 rocky8 ubunt20 测试通过
+centos7 centos8 rocky8 ubunt20 下测试通过
   
 快速使用  
 ① 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/net/latencysee.sh  

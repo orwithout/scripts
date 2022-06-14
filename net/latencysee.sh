@@ -435,23 +435,26 @@ func_loggong_init() {
     declare -F "func_logging_to_$WRITETO" >/dev/null || def_exit 2 "指定的-t $WRITETO未定义 目前只支持-t console(输出到控制台) -t file输出记录到文件 (使用-h 获取帮助"
 }
 
-func_logging_date() { # $1:回车换行方式 $2:检测方式:主机地址:端口    #异步 每到整点时间 输出一条日期-时间信息字符串
-    while true ;do
-        minute_inloggingdate=$(date +%M |gawk '{printf("%i\n",$1)}')
-        second_inloggingdate=$(date +%S |gawk '{printf("%i\n",$1)}')
-        printf '%b' "$1$(date "+%Y-%m-%d-%H:%M:%S")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
-        (( second_inloggingdate = (60-minute_inloggingdate)*60 - "$second_inloggingdate"))
-        sleep "$second_inloggingdate"
-    done
-}
+#func_logging_date() { # $1:回车换行方式 $2:检测方式:主机地址:端口    #异步 每到整点时间 输出一条日期-时间信息字符串
+#    while true ;do
+#        second_inloggingdate=$( date "+%M %S" |gawk '{printf("%i\n",(60-$1)*60 - $2)}')
+#        printf '%b' "$1$(date "+%Y-%m-%d-%H")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
+#        sleep "$second_inloggingdate"
+#    done
+#}
 
 func_logging_time() {
-    sec_inloggingtime=$(date +%S |gawk '{printf("%i\n",$1)}')
-    (( sec_inloggingtime = TIME_TAG_NEXT - sec_inloggingtime ))
-    sleep $sec_inloggingtime
+    printf '%b' "$1$(date "+%Y%m%d-%H")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
     while  true  ;do
-        printf '%b' "$1$(date +%M:%S)"
-        sleep "$TIME_TAG_NEXT"
+        #whoami >/dev/null  #没有什么作用，仅仅是为了起个延时作用
+        hour_inloggingtime=$(date +%H)
+        second_inloggingtime2=$(date +%S)
+        second_inloggingtime=$(echo "$TIME_TAG_NEXT $second_inloggingtime2" |gawk '{printf("%i\n",$1-$2)}')
+        printf '%b' "$1$(date +%M):$second_inloggingtime2"
+        sleep "$second_inloggingtime"
+        if [[ $(date +%H) != "$hour_inloggingtime" ]] ;then  #小时数变了
+            printf '%b' "$1$(date "+%Y%m%d-%H")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
+        fi
     done
 }
 
@@ -481,9 +484,8 @@ func_logging_to_console() {  # $1:检测类型 $2:目标主机地址 $3:端口 $
     echo -en "\n$returned_DNS_toconsole"
 
     #时间tag
-    func_logging_date '\n' "$DEST1:$DEST2:$DEST3" &
-    whoami >/dev/null  #没有什么作用，仅仅是为了起个延时作用
-    func_logging_time '\n' &
+    func_logging_time '\n' "$DEST1:$DEST2:$DEST3" &
+    #func_logging_time '\n' &
     
     #死循环记录延时 里面要注重性能
     while true ;do
@@ -552,9 +554,8 @@ func_logging_to_file() {
         func_dns
         echo "<br />$returned_DNS_tofile"
         #插入时间标记
-        func_logging_date '<br />' "$DEST1:$DEST2:$DEST3" &
-        whoami >/dev/null  #没有什么作用，仅仅是为了起个延时作用
-        func_logging_time '<br />' &
+        func_logging_time '<br />' "$DEST1:$DEST2:$DEST3" &
+        #func_logging_time '<br />' &
 
         #记录延时
         while true ;do

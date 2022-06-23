@@ -64,7 +64,7 @@ EXECUTING="$(echo executing: "$0" "$*" |tr -s ' ')"
 START_PWD="pwd: $(pwd)"
 SHELL_NAME=$(basename "$0")
 PGID_THIS="$$"
-PGID_FILE="uuid-9fa64886-71ef-11ec-90d6-0242ac120003"
+#PGID_FILE="uuid-9fa64886-71ef-11ec-90d6-0242ac120003"
 def_note() {  #$0 $1(提示的字符串)
     echo "${SHELL_NAME[2]} " "$1" >&2
 }
@@ -76,7 +76,7 @@ def_exit() {  #def_exit $1(设置的$?值) $2(退出提示信息)
 	echo "${FUNCNAME[*]}" >&2
     echo "$EXECUTING" >&2
     echo "$START_PWD" >&2
-    [[ -f $PGID_FILE ]] && rm -f "$PGID_FILE" && def_warning "已清理pgid记录文件PGID_FILE"
+    #[[ -f $PGID_FILE ]] && rm -f "$PGID_FILE" && def_warning "已清理pgid记录文件PGID_FILE"
     kill -TERM -- -"$PGID_THIS" 
     #def_warning "已杀死当前组进程 $PGID_THIS"
     #exit "$1"
@@ -121,11 +121,12 @@ while getopts 'd:t:k:i:c:sh' OPT; do
 done
 
 #参数初始化
+SHELL_NAME=$(basename "$0")
 PATH_WORK="$(realpath "$0").work"
 #PATH_BASE=$(dirname "$PATH_WORK")
 PGID_THIS="$$"
-PGID_FILE="$PATH_WORK"/"${DEST//:/-}".pgid
-PGID_FILE_TO_KILL="$PATH_WORK"/"${KILL//:/-}".pgid
+#PGID_FILE="$PATH_WORK"/"${DEST//:/-}".pgid
+#PGID_FILE_TO_KILL="$PATH_WORK"/"${KILL//:/-}".pgid
 
 
 
@@ -135,43 +136,43 @@ PGID_FILE_TO_KILL="$PATH_WORK"/"${KILL//:/-}".pgid
 # shellcheck disable=SC2009
 
 func_kill() {
-    if [[ -f $PGID_FILE_TO_KILL ]] ;then
-        pgid_num=$(<"$PGID_FILE_TO_KILL") \
-        &&rm -f "$PGID_FILE_TO_KILL" && def_warning "已清理pgid记录文件$PGID_FILE_TO_KILL"
-        kill -TERM -- -"$pgid_num"   && def_warning "已杀死$PGID_FILE_TO_KILL 的进程组 $pgid_num"
+    if grep -qEwi 'show|s' <<< "$KILL" ;then
+        echo "---------------------------------------------------------------------------------------"
+        echo "ps x -o \"%r %p %c %a\""        
+        if [[ $(whoami) = 'root' ]] ;then
+            ps x -o "%r %p %c %a" |grep -Ei "pid|sleep|$SHELL_NAME"
+        else
+            ps x -o "%r %p %c %a"
+        fi
+        #echo
+        #echo "组pid记录文件 :"
+        #ls -l "$PATH_WORK"/*.pgid
+        #echo
+        echo "---------------------------------------------------------------------------------------"
+    elif grep -q '^[[:digit:]]*$' <<< "$KILL" ;then   #是个数字
+        #grep -rw "$KILL" "$PATH_WORK" |cut -d: -f1 |xargs rm -f  #删除含有记录此 进程组id的文件
+        kill -TERM -- -"$KILL" && def_warning "已杀死进程组 $KILL"
     elif grep -qEwi 'all|a' <<< "$KILL" ;then
-        pre_kill=$(basename "$0")
-        pre_kill=$(ps x  -o "%r %c" |grep -Ew "$pre_kill" | grep -Ewo '[0-9]+' |sort -t: -u -k1,1)  #sort 去重
-        rm -f "$PATH_WORK"/*.pgid && def_warning "已清理所有pgid记录文件"
+        pre_kill=$(ps x  -o "%r %c" |grep -Ew "$SHELL_NAME" | grep -Ewo '[0-9]+' |sort -t: -u -k1,1)  #sort 去重
+        #rm -f "$PATH_WORK"/*.pgid && def_warning "已清理所有pgid记录文件"
         for i in $pre_kill ;do
             [[ $i = "$PGID_THIS" ]] && continue  #不要杀死自己了
             kill -TERM -- -"$i" && def_warning "已杀死进程组 $i"
         done
-    elif grep -qEwi 'show|s' <<< "$KILL" ;then
-        echo "---------------------------------------------------------------------------------------"
-        echo "ps x -o \"%r %p %c %a\""        
-        if [[ $(whoami) = 'root' ]] ;then
-            ps x -o "%r %p %c %a" |grep -Ei "pid|sleep|$(basename "$0")"
-        else
-            ps x -o "%r %p %c %a"
-        fi
-        echo
-        echo "组pid记录文件 :"
-        ls -l "$PATH_WORK"/*.pgid
-        echo
-        echo "---------------------------------------------------------------------------------------"
-    elif grep -q '^[[:digit:]]*$' <<< "$KILL" ;then   #是个数字
-        grep -rw "$KILL" "$PATH_WORK" |cut -d: -f1 |xargs rm -f  #删除含有记录此 进程组id的文件
-        kill -TERM -- -"$KILL" && def_warning "已杀死进程组 $KILL"
     else
-        def_exit 2 "-k 的参数值无法识别 $KILL 或找不到对应pgid(进程组id)的记录文件$PGID_FILE_TO_KILL"
+        pre_kill=$(ps x  -o "%r %c %a" |grep -E "$SHELL_NAME.*$KILL" |grep -Eo ".*$SHELL_NAME" | grep -Ewo '[0-9]+' |sort -t: -u -k1,1)  #sort 去重
+        for i in $pre_kill ;do
+            [[ $i = "$PGID_THIS" ]] && continue  #不要杀死自己了
+            kill -TERM -- -"$i" && def_warning "已杀死包含$KILL的本脚本实例进程组 $i"
+        done
+        #def_exit 2 "-k 的参数值无法识别 $KILL 或找不到对应pgid(进程组id)的记录文件$PGID_FILE_TO_KILL"
     fi
 }
 
 
 func_trap_def() {
 #    echo "asdf"
-    [[ -f $PGID_FILE ]] && rm -f "$PGID_FILE" &&def_warning "已清理pgid记录文件$PGID_FILE"
+    #[[ -f $PGID_FILE ]] && rm -f "$PGID_FILE" &&def_warning "已清理pgid记录文件$PGID_FILE"
     kill -TERM -- -"$PGID_THIS"
 }
 trap  func_trap_def SIGINT    #如果程序退出 定义扫尾工作 以避免后面会使用的后台进程不会正常停止   #如果有后台进程 貌似不支持
@@ -205,7 +206,7 @@ func_pingicmp(){  #$1:目标主机地址  $2:端口    #返回$LOSS_MARK表示�
 }
 
 func_arp_init() {
-    if socat 2>&1 |grep -qEw 'command not found' ;then
+    if arping 2>&1 |grep -qEwi 'command.*not found' ;then
         def_exit 3 "请先安装arping nping 方法(centos) yum install -y arping 或(ubuntu) apt install -y arping"
     fi
     [[ $DEST1 =~ arp.*arp || $DEST1 = 'arping' ]] && LOGGING_func='func_arping'
@@ -277,7 +278,7 @@ func_shell() {  #$1:目标主机地址  $2:端口    #返回$LOSS_MARK表示丢�
 }
 
 func_mtr_init(){  #$1:测试类型 $2:主机地址  #初始化 MTR_maxTTL MTR_type MTR_sudo
-    if traceroute 2>&1 |grep -qEw 'command not found' ;then
+    if traceroute 2>&1 |grep -qEwi 'command.*not found' ;then
         def_exit 3 "没有安装traceroute命令 请使用 yum install traceroute 或 apt install traceroute 进行安装"
     fi
     MTR_maxTTL=$(traceroute "$DEST2" -q"$JUDGES_TOTAL" -w2 -n)
@@ -319,7 +320,7 @@ func_soc_init(){   #$1:测试类型 $2:目标主机 $3:端口    #初始化SOCAT
     if [[ -f ./socat ]] ;then
         chmod +x ./socat ||def_exit 3 "检测到./socat 但修改可执行失败"
         SOCAT_path='./socat'
-    elif socat 2>&1 |grep -qEw 'command not found' ;then
+    elif socat 2>&1 |grep -qEwi 'command.*not found' ;then
         def_exit 3 "没有安装socat wget下载 http://www.dest-unreach.org/socat/download/socat-1.7.4.3.tar.gz 解压后命名为socat 放在与本脚本同目录中\n或使用yum ap安装"
     else
         SOCAT_path='socat'
@@ -344,7 +345,12 @@ func_socat(){  # $1:目标主机 $2:端口号   #返回$LOSS_MARK表示丢包  �
     ok_socat=0
     result_socat=0
     for ((i=1;i<="$JUDGES_TOTAL";i++)) ;do    #测试$JUDGES_TOTAL次，以获取延时平均值和丢包率
-        tmp_socat=$(echo 'h' |$SOCAT_path -v - "$SOCAT_type":"$1":"$2" 2>&1) #发个h过去 
+        tmp_socat=$(echo 'h' |$SOCAT_path -v - "$SOCAT_type":"$1":"$2" 2>&1)
+        tmp_socat=${tmp_socat:-E}
+        if [[ $tmp_socat = 'E' ]] ;then
+            echo "=-==E" #发个h过去
+            continue
+        fi
         #echo "$4 -v - $3:$1:$2  ====$tmp_socat===="  #debug
         if [[ "$tmp_socat" =~ '<' ]] ;then  #表示收到了回信
             tmp_socat=$(echo "$tmp_socat" |grep -Eo '[0-9]{4}.*[0-9]{6}')
@@ -382,7 +388,7 @@ func_papingtcp(){  #$1:目标主机地址  $2:端口    #返回$LOSS_MARK表示�
 func_npi_init() {
     #rpm -vhU https://nmap.org/dist/nping-0.7.92-1.x86_64.rpm
     #rpm -e nping.x86_64
-    if socat 2>&1 |grep -qEw 'command not found' ;then
+    if nping 2>&1 |grep -qEwi 'command.*not found' ;then
         def_exit 3 "请先安装nping 方法rpm -vhU https://nmap.org/dist/nping-0.7.92-1.x86_64.rpm (对应卸载方法rpm -e nping.x86_64)"
     fi
 
@@ -435,6 +441,24 @@ func_loggong_init() {
     declare -F "func_logging_to_$WRITETO" >/dev/null || def_exit 2 "指定的-t $WRITETO未定义 目前只支持-t console(输出到控制台) -t file输出记录到文件 (使用-h 获取帮助"
 }
 
+func_dns() {  # $1:主机地址
+    #如果是域名 解析为ip
+    DEST2_origin="$DEST2"
+    if ! grep -qEw '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' <<< "$DEST2" ;then  #将域名解析为ip
+        name_host="$(ping "$DEST2" -c1 2>&1)"
+        date_dns_info="时间点$(date "+%Y-%m-%d-%H:%M:%S") 域名$DEST2解析"
+        if grep -qEi 'Name.*not known' <<< "$name_host" ;then
+            returned_DNS_toconsole="\033[31m$date_dns_info失败!!!\033[0m"  #m91 血色
+            returned_DNS_tofile="<font color=\"#FF0000\">$date_dns_info失败!!!</font>"  #m91 血色
+        else
+            DEST2_origin="$DEST2"
+            DEST2="$(echo "$name_host" |grep -Ewim1 ping |grep -Ewo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' |tail -n1)"
+            returned_DNS_toconsole="\033[34m$date_dns_info=$DEST2\033[0m"
+            returned_DNS_tofile="<font color=\"#0000FF\">$date_dns_info=$DEST2</font>"
+        fi
+    fi
+}
+
 #func_logging_date() { # $1:回车换行方式 $2:检测方式:主机地址:端口    #异步 每到整点时间 输出一条日期-时间信息字符串
 #    while true ;do
 #        second_inloggingdate=$( date "+%M %S" |gawk '{printf("%i\n",(60-$1)*60 - $2)}')
@@ -443,8 +467,42 @@ func_loggong_init() {
 #    done
 #}
 
+
+func_loggint_time_logfile_cut() {
+    if [[ $(date +%d) != "$day_inloggingtime" ]] ;then #日变了
+        dir_log_week=$dir_log_src/"$DEST2_origin""_$year_inloggingtime.$month_inloggingtime""_week$week_inloggingtime"
+        file_log_daily=$dir_log_week/"$year_inloggingtime.$month_inloggingtime.$day_inloggingtime""_week$week_inloggingtime.$weekday_inloggingtime""_$session_inloggingtime""__$DEST1""__$DEST2_origin""${DEST3:+_$DEST3}""_PGID.$PGID_THIS".html
+        [[ -d $dir_log_week ]] || mkdir -p "$dir_log_week"
+        if cat "$file_log_src" >> "$file_log_daily" ;then
+            echo "<a href=\"./\">更早的记录,已按\"周\"进行了归档:</a>$(dirname "$file_log_daily")<br />" > "$file_log_src"
+            head -n3 "$file_log_daily" >> "$file_log_src"
+        fi
+        year_inloggingtime=$(date +%Y)
+        month_inloggingtime=$(date +%m)
+        day_inloggingtime=$(date +%d)
+        week_inloggingtime=$(date +%V)
+        weekday_inloggingtime=$(date +%w)
+    fi
+}
+
 func_logging_time() {
-    printf '%b' "$1$(date "+%Y%m%d-%H")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
+    if grep -qEi '\.html$' <<< "$2" ;then
+        year_inloggingtime=$(date +%Y)
+        month_inloggingtime=$(date +%m)
+        day_inloggingtime=$(date +%d)
+        week_inloggingtime=$(date +%V)
+        weekday_inloggingtime=$(date +%w)
+
+        session_inloggingtime=$(whoami).$(hostname -I |tr -d ' ')
+        file_log_src="$2"
+        dir_log_src=$(dirname "$2")
+
+        logfile_cut=func_loggint_time_logfile_cut
+    else
+        logfile_cut=''
+    fi
+
+    printf '%b' "$1$(date "+%Y%m%d.%H点周%w")_$DEST1""__$DEST2_origin:$DEST3""_单位 ms 延时 [组进程ID $PGID_THIS]"
     while  true  ;do
         #whoami >/dev/null  #没有什么作用，仅仅是为了起个延时作用
         hour_inloggingtime=$(date +%H)
@@ -453,31 +511,18 @@ func_logging_time() {
         printf '%b' "$1$(date +%M):$second_inloggingtime2"
         sleep "$second_inloggingtime"
         if [[ $(date +%H) != "$hour_inloggingtime" ]] ;then  #小时数变了
-            printf '%b' "$1$(date "+%Y%m%d-%H")-$2-单位 ms 延时 [组进程ID $PGID_THIS]"
+            $logfile_cut            
+            printf '%b' "$1$(date "+%Y%m%d.%H点周%w")_$DEST1""__$DEST2_origin:$DEST3""_单位 ms 延时 [组进程ID $PGID_THIS]"
+            #printf '%b' "$1$(date "+%Y%m%d.%H点星期%w")-$DEST1:$DEST2_origin:$DEST3-单位 ms 延时 [组进程ID $PGID_THIS]"
         fi
     done
 }
 
-func_dns() {  # $1:主机地址
-    #如果是域名 解析为ip
-    if ! grep -qEw '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' <<< "$DEST2" ;then  #将域名解析为ip
-        name_host="$(ping "$DEST2" -c1 2>&1)"
-        date_dns_info="当前时间$(date "+%Y-%m-%d-%H:%M:%S") 域名$DEST2解析"
-        if grep -qEi 'Name.*not known' <<< "$name_host" ;then
-            returned_DNS_toconsole="\033[31m$date_dns_info失败!!!\033[0m"  #m91 血色
-            returned_DNS_tofile="<font color=\"#FF0000\">$date_dns_info失败!!!</font>"  #m91 血色
-        else
-            DEST2="$(echo "$name_host" |grep -Ewim1 ping |grep -Ewo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' |tail -n1)"
-            returned_DNS_toconsole="\033[34m$date_dns_info=$DEST2\033[0m"
-            returned_DNS_tofile="<font color=\"#0000FF\">$date_dns_info=$DEST2</font>"
-        fi
-    fi
-}
 
 func_logging_to_console() {  # $1:检测类型 $2:目标主机地址 $3:端口 $4:记录方式
     #初始化
     func_loggong_init "$DEST2" "$DEST3"
-    echo -n "如果发现异常中止方法./$(basename "$0") -k $PGID_THIS  或kill -TERM -- -$PGID_THIS"  
+    echo -n "如果发现异常中止方法./$SHELL_NAME -k $PGID_THIS  或kill -TERM -- -$PGID_THIS"  
     
     #DNS tag
     func_dns
@@ -521,13 +566,13 @@ func_logging_to_console() {  # $1:检测类型 $2:目标主机地址 $3:端口 $
 
 func_logging_to_file() {
     #log文件路径
-    tmp_inloggingfile=$DEST2/$(date +%Y-%m)_$(hostname -I |tr -d ' ').$(whoami)__"$DEST1"__"$DEST2""${DEST3:+_$DEST3}".html
-    if [[ -d /opt/files/log/ && $(hostname -I) =~ 10\.4\.100\.19 ]] ;then
-        logging_html=/opt/files/log/"$tmp_inloggingfile"  #日志记录文件
-        echo "日志文件下载 http://f.fsbm.cc/log/$tmp_inloggingfile"
+    name_inloggingtofile="$DEST2"_$(date +%Y.%m.%d_%H.%M.%S)_$(whoami).$(hostname -I |tr -d ' ')"__$DEST1""${DEST3:+_$DEST3}""_PGID.$PGID_THIS".html  #后缀名勿修改 后面函数会基于后缀名进行判断
+    if [[ -d /opt/files/$SHELL_NAME.log && -w /opt/files/$SHELL_NAME.log && $(hostname -I) =~ 10\.4\.100\.19 ]] ;then
+        logging_html=/opt/files/$SHELL_NAME.log/"$name_inloggingtofile"  #日志记录文件
+        echo "日志文件下载 http://f.fsbm.cc/$SHELL_NAME.log/$name_inloggingtofile"
     else
-        logging_html="$PATH_WORK"/"$tmp_inloggingfile"
-        echo "日志文件所在 $PATH_WORK/$tmp_inloggingfile"
+        logging_html="$PATH_WORK"/"$name_inloggingtofile"
+        echo "日志文件所在 $PATH_WORK/$name_inloggingtofile"
     fi
     #log文件初始化
     tmp_inloggingtofile="$(dirname "$logging_html")"
@@ -536,25 +581,26 @@ func_logging_to_file() {
     else
         [[ -w $tmp_inloggingtofile ]] || def_exit 3 "要记录的日志的文件路径不具有可写权限$tmp_inloggingtofile"
     fi
+    
     #pgid文件路径初始化
-    tmp_inloggingtofile="$(dirname "$PGID_FILE")"
-    if [[ ! -d $tmp_inloggingtofile ]] ;then
-        mkdir -p "$tmp_inloggingtofile" ||def_exit 3 "创建pgid(组进程id)文件保存目录失败$tmp_inloggingtofile"
-    else
-        [[ -w $tmp_inloggingtofile ]] || def_exit 3 "要保存pgid(组进程id)的文件路径不具有可写权限$tmp_inloggingtofile"
-    fi
+    #tmp_inloggingtofile="$(dirname "$PGID_FILE")"
+    #if [[ ! -d $tmp_inloggingtofile ]] ;then
+    #    mkdir -p "$tmp_inloggingtofile" ||def_exit 3 "创建pgid(组进程id)文件保存目录失败$tmp_inloggingtofile"
+    #else
+    #    [[ -w $tmp_inloggingtofile ]] || def_exit 3 "要保存pgid(组进程id)的文件路径不具有可写权限$tmp_inloggingtofile"
+    #fi
 
     #初始化
     func_loggong_init "$DEST2" "$DEST3" &>> "$logging_html"
-    echo "开始后台运行 中止方法./$(basename "$0") -k $DEST  或./$(basename "$0") -k all (中止所有本脚本实例)"
-    echo "$$ " > "$PGID_FILE"  
+    echo "开始后台运行 中止方法./$SHELL_NAME -k $DEST  或./$SHELL_NAME -k all (中止所有本脚本实例)"
+    #echo "$$ " > "$PGID_FILE"
 
     {
         #DNS tag
         func_dns
         echo "<br />$returned_DNS_tofile"
         #插入时间标记
-        func_logging_time '<br />' "$DEST1:$DEST2:$DEST3" &
+        func_logging_time '<br />' "$logging_html" &
         #func_logging_time '<br />' &
 
         #记录延时

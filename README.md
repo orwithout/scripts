@@ -1,6 +1,4 @@
 ## latencysee.sh
-类似"ping"的网络延时检测  支持tcp udp icmp apr协议  
-centos7 centos8 rocky8 ubunt20 下测试通过
   
 快速使用  
 ① 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/net/latencysee.sh  
@@ -8,11 +6,8 @@ centos7 centos8 rocky8 ubunt20 下测试通过
 ③ 给与执行权限 chmod +x ./latencysee.sh  
 
 使用示例  
-./latencysee.sh   -k all     #中止所有本脚本已运行的实例  
-./latencysee.sh   ssh-tcp:qq.com:80      #ssh测试tcp端口延时 对某些服务延时会增加 (推荐nping模式)  
-./latencysee.sh   nping-tcp:ali1.fsbm.cc:19765    #使用nping测试ali1.fsbm.cc的tcp端口19765 如果要后台运行可增加参数 -t file  
-./latencysee.sh   nping-tcp:ali1.fsbm.cc:19765  -t file   #使用nping测试ali1.fsbm.cc的tcp端口19765 如果要后台运行可增加参数 -t file  
-./latencysee.sh   nping-udp:ali1.fsbm.cc:19765    #需依赖于对端udp服务会不会有回音 (推荐socat联机模式)  
+./latencysee.sh   nping-tcp:qq.com:80    #测试qq.com 80端口延时
+./latencysee.sh   nping-udp:114.114.114.114:53    #测试114.114.114.114的udp-53端口延时
 ./latencysee.sh   -h    #获取使用帮助  
 ![这是图片](./net/latencysee.sh.png "Magic Gardens")
   

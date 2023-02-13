@@ -4,11 +4,12 @@
 ① 下载: wget https://raw.githubusercontent.com/orwithout/scripts/main/net/latencysee.sh  
 ② cd 进入到下载目录  
 ③ 给与执行权限 chmod +x ./latencysee.sh  
-
+./latencysee.sh   -h    #获取使用帮助  
+   
 使用示例  
 ./latencysee.sh   nping-tcp:qq.com:80    #测试qq.com 80端口延时  
 ./latencysee.sh   nping-udp:114.114.114.114:53    #测试114.114.114.114的udp-53端口延时  
-./latencysee.sh   -h    #获取使用帮助  
+
 ![这是图片](./net/latencysee.sh.png "Magic Gardens")  
   
 ## nif.sh

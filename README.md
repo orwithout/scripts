@@ -6,10 +6,10 @@
 ③ 给与执行权限 chmod +x ./latencysee.sh  
 
 使用示例  
-./latencysee.sh   nping-tcp:qq.com:80    #测试qq.com 80端口延时
-./latencysee.sh   nping-udp:114.114.114.114:53    #测试114.114.114.114的udp-53端口延时
+./latencysee.sh   nping-tcp:qq.com:80    #测试qq.com 80端口延时  
+./latencysee.sh   nping-udp:114.114.114.114:53    #测试114.114.114.114的udp-53端口延时  
 ./latencysee.sh   -h    #获取使用帮助  
-![这是图片](./net/latencysee.sh.png "Magic Gardens")
+![这是图片](./net/latencysee.sh.png "Magic Gardens")  
   
 ## nif.sh
 (newwork info)用于检测两台Linux之间 [端口状态] [延时] [带宽] [路由追踪]  
